@@ -1,0 +1,774 @@
+# CryptoMind Pro Plus - KivyMD Layout
+
+<MainScreen>:
+    name: "main"
+    btc_price: "$--"
+    btc_change: "+0.00%"
+    btc_change_color: 0.25, 0.73, 0.31, 1
+    signal_text: "分析中"
+    signal_color: 0.90, 0.91, 0.93, 1
+    confidence_text: "0%"
+    fr_value: "--"
+    oi_value: "--"
+    liq_value: "--"
+    ls_value: "--"
+    rsi_value: "--"
+    macd_value: "--"
+    bb_value: "--"
+    analysis_summary: "正在获取数据..."
+    news_text: "加载中..."
+    last_update: "--"
+    model_name: "Gemma 3 4B"
+    is_loading: False
+
+    MDBoxLayout:
+        orientation: "vertical"
+        md_bg_color: 0.05, 0.07, 0.10, 1
+
+        MDBoxLayout:
+            size_hint_y: None
+            height: "56dp"
+            padding: "8dp", "4dp"
+            md_bg_color: 0.07, 0.10, 0.13, 1
+
+            MDIconButton:
+                icon: "chart-line"
+                theme_icon_color: "Custom"
+                icon_color: 0.35, 0.65, 1.0, 1
+                on_release: app.show_chart_fullscreen()
+
+            MDLabel:
+                text: "CryptoMind Pro"
+                font_style: "H6"
+                text_color: 0.90, 0.91, 0.93, 1
+                bold: True
+                halign: "center"
+
+            MDIconButton:
+                icon: "cog"
+                theme_icon_color: "Custom"
+                icon_color: 0.55, 0.58, 0.62, 1
+
+        ScrollView:
+            do_scroll_x: False
+
+            MDBoxLayout:
+                orientation: "vertical"
+                padding: "12dp"
+                spacing: "10dp"
+                size_hint_y: None
+                height: self.minimum_height
+
+                # BTC价格卡
+                MDCard:
+                    padding: "16dp"
+                    radius: [16]
+                    md_bg_color: 0.08, 0.11, 0.15, 1
+                    MDLabel:
+                        text: "BTC/USDT  Binance"
+                        theme_text_color: "Custom"
+                        text_color: 0.55, 0.58, 0.62, 1
+                        font_size: "12sp"
+                    MDLabel:
+                        id: btc_price_lbl
+                        text: root.btc_price
+                        font_style: "H3"
+                        bold: True
+                        text_color: 1, 1, 1, 1
+                        size_hint_y: None
+                        height: "48dp"
+                    BoxLayout:
+                        size_hint_y: None
+                        height: "28dp"
+                        spacing: "8dp"
+                        MDLabel:
+                            id: btc_change_lbl
+                            text: root.btc_change
+                            font_style: "H6"
+                            bold: True
+                            text_color: root.btc_change_color
+                        MDLabel:
+                            id: last_update_lbl
+                            text: root.last_update
+                            theme_text_color: "Custom"
+                            text_color: 0.55, 0.58, 0.62, 1
+                            font_size: "11sp"
+                            halign: "right"
+
+                # 信号卡
+                MDCard:
+                    padding: "14dp"
+                    radius: [16]
+                    md_bg_color: 0.08, 0.11, 0.15, 1
+                    BoxLayout:
+                        orientation: "horizontal"
+                        size_hint_y: None
+                        height: "48dp"
+                        BoxLayout:
+                            orientation: "vertical"
+                            size_hint_x: 1
+                            MDLabel:
+                                text: "AI 信号"
+                                theme_text_color: "Custom"
+                                text_color: 0.55, 0.58, 0.62, 1
+                                font_size: "12sp"
+                            MDLabel:
+                                id: signal_lbl
+                                text: root.signal_text
+                                font_style: "H4"
+                                bold: True
+                                text_color: root.signal_color
+                        BoxLayout:
+                            orientation: "vertical"
+                            halign: "right"
+                            size_hint_x: 0.8
+                            MDLabel:
+                                text: "置信度"
+                                theme_text_color: "Custom"
+                                text_color: 0.55, 0.58, 0.62, 1
+                                font_size: "11sp"
+                                halign: "right"
+                            MDLabel:
+                                id: conf_lbl
+                                text: root.confidence_text
+                                font_style: "H5"
+                                bold: True
+                                text_color: 0.35, 0.65, 1.0, 1
+                                halign: "right"
+
+                # 置信度进度条
+                MDProgressBar:
+                    id: conf_progress
+                    value: 0
+                    max: 100
+                    color: 0.35, 0.65, 1.0, 1
+                    size_hint_y: None
+                    height: "6dp"
+
+                # 市场数据 2x2
+                GridLayout:
+                    cols: 2
+                    spacing: "8dp"
+                    size_hint_y: None
+                    height: self.minimum_height
+
+                    MDCard:
+                        padding: "12dp"
+                        radius: [12]
+                        md_bg_color: 0.08, 0.11, 0.15, 1
+                        MDLabel:
+                            text: "资金费率"
+                            theme_text_color: "Custom"
+                            text_color: 0.55, 0.58, 0.62, 1
+                            font_size: "11sp"
+                        MDLabel:
+                            id: fr_lbl
+                            text: root.fr_value
+                            font_style: "H6"
+                            bold: True
+
+                    MDCard:
+                        padding: "12dp"
+                        radius: [12]
+                        md_bg_color: 0.08, 0.11, 0.15, 1
+                        MDLabel:
+                            text: "持仓量"
+                            theme_text_color: "Custom"
+                            text_color: 0.55, 0.58, 0.62, 1
+                            font_size: "11sp"
+                        MDLabel:
+                            id: oi_lbl
+                            text: root.oi_value
+                            font_style: "H6"
+                            bold: True
+
+                    MDCard:
+                        padding: "12dp"
+                        radius: [12]
+                        md_bg_color: 0.08, 0.11, 0.15, 1
+                        MDLabel:
+                            text: "24h爆仓"
+                            theme_text_color: "Custom"
+                            text_color: 0.55, 0.58, 0.62, 1
+                            font_size: "11sp"
+                        MDLabel:
+                            id: liq_lbl
+                            text: root.liq_value
+                            font_style: "H6"
+                            bold: True
+
+                    MDCard:
+                        padding: "12dp"
+                        radius: [12]
+                        md_bg_color: 0.08, 0.11, 0.15, 1
+                        MDLabel:
+                            text: "多空比"
+                            theme_text_color: "Custom"
+                            text_color: 0.55, 0.58, 0.62, 1
+                            font_size: "11sp"
+                        MDLabel:
+                            id: ls_lbl
+                            text: root.ls_value
+                            font_style: "H6"
+                            bold: True
+
+                # 技术指标
+                MDCard:
+                    padding: "14dp"
+                    radius: [16]
+                    md_bg_color: 0.08, 0.11, 0.15, 1
+                    MDLabel:
+                        text: "技术指标"
+                        font_style: "Subtitle1"
+                        bold: True
+                        text_color: 0.90, 0.91, 0.93, 1
+                    GridLayout:
+                        cols: 3
+                        spacing: "12dp"
+                        size_hint_y: None
+                        height: "60dp"
+                        MDLabel:
+                            text: "RSI(14)"
+                            theme_text_color: "Custom"
+                            text_color: 0.55, 0.58, 0.62, 1
+                            font_size: "11sp"
+                            halign: "center"
+                        MDLabel:
+                            text: "MACD"
+                            theme_text_color: "Custom"
+                            text_color: 0.55, 0.58, 0.62, 1
+                            font_size: "11sp"
+                            halign: "center"
+                        MDLabel:
+                            text: "布林带"
+                            theme_text_color: "Custom"
+                            text_color: 0.55, 0.58, 0.62, 1
+                            font_size: "11sp"
+                            halign: "center"
+                        MDLabel:
+                            id: rsi_lbl
+                            text: root.rsi_value
+                            font_style: "H6"
+                            bold: True
+                            halign: "center"
+                        MDLabel:
+                            id: macd_lbl
+                            text: root.macd_value
+                            font_style: "H6"
+                            bold: True
+                            halign: "center"
+                        MDLabel:
+                            id: bb_lbl
+                            text: root.bb_value
+                            font_style: "H6"
+                            bold: True
+                            halign: "center"
+
+                # 分析摘要
+                MDCard:
+                    padding: "14dp"
+                    radius: [16]
+                    md_bg_color: 0.08, 0.11, 0.15, 1
+                    MDLabel:
+                        text: "分析摘要"
+                        font_style: "Subtitle1"
+                        bold: True
+                        text_color: 0.90, 0.91, 0.93, 1
+                    MDLabel:
+                        id: summary_lbl
+                        text: root.analysis_summary
+                        theme_text_color: "Custom"
+                        text_color: 0.75, 0.76, 0.80, 1
+                        font_size: "13sp"
+                        text_size: self.width, None
+                        size_hint_y: None
+                        height: self.texture_size[1] + 10
+                    MDLabel:
+                        text: "Gemma 3 4B 本地模型"
+                        theme_text_color: "Custom"
+                        text_color: 0.55, 0.58, 0.62, 1
+                        font_size: "11sp"
+                        size_hint_y: None
+                        height: "20dp"
+
+                # 新闻
+                MDCard:
+                    padding: "14dp"
+                    radius: [16]
+                    md_bg_color: 0.08, 0.11, 0.15, 1
+                    MDLabel:
+                        text: "最新新闻"
+                        font_style: "Subtitle1"
+                        bold: True
+                        text_color: 0.90, 0.91, 0.93, 1
+                    MDLabel:
+                        id: news_lbl
+                        text: root.news_text
+                        theme_text_color: "Custom"
+                        text_color: 0.75, 0.76, 0.80, 1
+                        font_size: "13sp"
+                        text_size: self.width, None
+                        size_hint_y: None
+                        height: self.texture_size[1] + 10
+                        max_lines: 3
+
+                # 知识库入口
+                MDCard:
+                    padding: "14dp"
+                    radius: [16]
+                    md_bg_color: 0.08, 0.11, 0.15, 1
+                    line_color: 0.35, 0.65, 1.0, 0.3
+                    on_release: app.show_knowledge_base()
+                    BoxLayout:
+                        orientation: "horizontal"
+                        size_hint_y: None
+                        height: "44dp"
+                        MDIcon:
+                            icon: "brain"
+                            theme_icon_color: "Custom"
+                            icon_color: 0.35, 0.65, 1.0, 1
+                            size_hint_x: 0.2
+                        BoxLayout:
+                            orientation: "vertical"
+                            size_hint_x: 1
+                            MDLabel:
+                                text: "知识库"
+                                font_style: "Subtitle1"
+                                bold: True
+                                text_color: 0.90, 0.91, 0.93, 1
+                            MDLabel:
+                                text: "成功模式 / 相似模式查询"
+                                theme_text_color: "Custom"
+                                text_color: 0.55, 0.58, 0.62, 1
+                                font_size: "12sp"
+                        MDIcon:
+                            icon: "chevron-right"
+                            theme_icon_color: "Custom"
+                            icon_color: 0.35, 0.65, 1.0, 1
+                            size_hint_x: 0.2
+                            halign: "center"
+
+                # 历史信号入口
+                MDCard:
+                    padding: "14dp"
+                    radius: [16]
+                    md_bg_color: 0.08, 0.11, 0.15, 1
+                    line_color: 0.83, 0.69, 0.22, 0.3
+                    on_release: app.show_history()
+                    BoxLayout:
+                        orientation: "horizontal"
+                        size_hint_y: None
+                        height: "44dp"
+                        MDIcon:
+                            icon: "chart-timeline-variant"
+                            theme_icon_color: "Custom"
+                            icon_color: 0.83, 0.69, 0.22, 1
+                            size_hint_x: 0.2
+                        BoxLayout:
+                            orientation: "vertical"
+                            size_hint_x: 1
+                            MDLabel:
+                                text: "历史信号"
+                                font_style: "Subtitle1"
+                                bold: True
+                                text_color: 0.90, 0.91, 0.93, 1
+                            MDLabel:
+                                text: "信号曲线 / 胜率统计"
+                                theme_text_color: "Custom"
+                                text_color: 0.55, 0.58, 0.62, 1
+                                font_size: "12sp"
+                        MDIcon:
+                            icon: "chevron-right"
+                            theme_icon_color: "Custom"
+                            icon_color: 0.83, 0.69, 0.22, 1
+                            size_hint_x: 0.2
+                            halign: "center"
+
+                MDBoxLayout:
+                    size_hint_y: None
+                    height: "80dp"
+
+        MDBottomNavigation:
+            size_hint_y: None
+            height: "56dp"
+            md_bg_color: 0.07, 0.10, 0.13, 1
+
+            MDBottomNavigationItem:
+                name: "home_tab"
+                text: "首页"
+                icon: "home"
+
+            MDBottomNavigationItem:
+                name: "charts_tab"
+                text: "图表"
+                icon: "chart-bell-curve"
+                on_tab_press: app.show_chart_fullscreen()
+
+            MDBottomNavigationItem:
+                name: "history_tab"
+                text: "历史"
+                icon: "history"
+                on_tab_press: app.show_history()
+
+            MDBottomNavigationItem:
+                name: "kb_tab"
+                text: "知识库"
+                icon: "brain"
+                on_tab_press: app.show_knowledge_base()
+
+            MDBottomNavigationItem:
+                name: "settings_tab"
+                text: "设置"
+                icon: "cog"
+
+
+# 图表全屏
+<ChartScreen>:
+    name: "chart"
+
+    MDBoxLayout:
+        orientation: "vertical"
+        md_bg_color: 0.05, 0.07, 0.10, 1
+
+        MDBoxLayout:
+            size_hint_y: None
+            height: "56dp"
+            padding: "8dp"
+            md_bg_color: 0.07, 0.10, 0.13, 1
+
+            MDIconButton:
+                icon: "arrow-left"
+                theme_icon_color: "Custom"
+                icon_color: 0.90, 0.91, 0.93, 1
+                on_release: app.sm.current = "main"
+
+            MDLabel:
+                text: "BTC/USDT K线图"
+                font_style: "H6"
+                bold: True
+                text_color: 0.90, 0.91, 0.93, 1
+                halign: "center"
+
+            MDLabel:
+                text: "4h周期"
+                theme_text_color: "Custom"
+                text_color: 0.55, 0.58, 0.62, 1
+                font_size: "12sp"
+                halign: "right"
+
+        RelativeLayout:
+            id: chart_container
+            size_hint_y: 0.5
+
+        RelativeLayout:
+            id: volume_container
+            size_hint_y: 0.15
+
+        ScrollView:
+            size_hint_y: 0.35
+
+            MDBoxLayout:
+                orientation: "vertical"
+                padding: "12dp"
+                spacing: "8dp"
+                size_hint_y: None
+                height: self.minimum_height
+
+                MDCard:
+                    padding: "12dp"
+                    radius: [12]
+                    md_bg_color: 0.08, 0.11, 0.15, 1
+                    MDLabel:
+                        text: "技术分析"
+                        font_style: "Subtitle1"
+                        bold: True
+                        text_color: 0.90, 0.91, 0.93, 1
+                    MDLabel:
+                        id: chart_summary_lbl
+                        text: "加载中..."
+                        theme_text_color: "Custom"
+                        text_color: 0.75, 0.76, 0.80, 1
+                        font_size: "13sp"
+                        text_size: self.width, None
+                        size_hint_y: None
+                        height: self.texture_size[1] + 10
+
+                MDCard:
+                    padding: "12dp"
+                    radius: [12]
+                    md_bg_color: 0.08, 0.11, 0.15, 1
+                    MDLabel:
+                        text: "形态识别"
+                        font_style: "Subtitle1"
+                        bold: True
+                        text_color: 0.90, 0.91, 0.93, 1
+                    MDLabel:
+                        id: chart_patterns_lbl
+                        text: "无"
+                        theme_text_color: "Custom"
+                        text_color: 0.75, 0.76, 0.80, 1
+                        font_size: "13sp"
+
+
+# 知识库详情
+<KnowledgeDetailScreen>:
+    name: "knowledge_detail"
+
+    MDBoxLayout:
+        orientation: "vertical"
+        md_bg_color: 0.05, 0.07, 0.10, 1
+
+        MDBoxLayout:
+            size_hint_y: None
+            height: "56dp"
+            padding: "8dp"
+            md_bg_color: 0.07, 0.10, 0.13, 1
+
+            MDIconButton:
+                icon: "arrow-left"
+                theme_icon_color: "Custom"
+                icon_color: 0.90, 0.91, 0.93, 1
+                on_release: app.sm.current = "main"
+
+            MDLabel:
+                text: "知识库"
+                font_style: "H6"
+                bold: True
+                text_color: 0.90, 0.91, 0.93, 1
+                halign: "center"
+
+        ScrollView:
+
+            MDBoxLayout:
+                orientation: "vertical"
+                padding: "12dp"
+                spacing: "10dp"
+                size_hint_y: None
+                height: self.minimum_height
+
+                MDCard:
+                    padding: "14dp"
+                    radius: [12]
+                    md_bg_color: 0.08, 0.11, 0.15, 1
+                    MDLabel:
+                        text: "知识库统计"
+                        font_style: "H6"
+                        bold: True
+                        text_color: 0.90, 0.91, 0.93, 1
+                    MDLabel:
+                        id: kb_stats_lbl
+                        text: root.kb_stats
+                        theme_text_color: "Custom"
+                        text_color: 0.75, 0.76, 0.80, 1
+                        font_size: "14sp"
+                        text_size: self.width, None
+                        size_hint_y: None
+                        height: self.texture_size[1] + 10
+
+
+# 设置页面
+<SettingsScreen>:
+    name: "settings"
+
+    MDBoxLayout:
+        orientation: "vertical"
+        md_bg_color: 0.05, 0.07, 0.10, 1
+
+        MDBoxLayout:
+            size_hint_y: None
+            height: "56dp"
+            padding: "8dp"
+            md_bg_color: 0.07, 0.10, 0.13, 1
+
+            MDIconButton:
+                icon: "arrow-left"
+                theme_icon_color: "Custom"
+                icon_color: 0.90, 0.91, 0.93, 1
+                on_release: app.sm.current = "main"
+
+            MDLabel:
+                text: "Settings"
+                font_style: "H6"
+                bold: True
+                text_color: 0.90, 0.91, 0.93, 1
+                halign: "center"
+
+        ScrollView:
+            MDBoxLayout:
+                orientation: "vertical"
+                padding: "12dp"
+                spacing: "10dp"
+                size_hint_y: None
+                height: self.minimum_height
+
+                MDCard:
+                    padding: "14dp"
+                    radius: [12]
+                    md_bg_color: 0.08, 0.11, 0.15, 1
+                    MDLabel:
+                        text: "API Configuration"
+                        font_style: "H6"
+                        bold: True
+                        text_color: 0.90, 0.91, 0.93, 1
+                    MDLabel:
+                        text: "Binance / OKX / Bybit / CoinGlass API Keys"
+                        theme_text_color: "Custom"
+                        text_color: 0.55, 0.58, 0.62, 1
+                        font_size: "13sp"
+                    MDLabel:
+                        text: "Configure in config/api_keys.py"
+                        theme_text_color: "Custom"
+                        text_color: 0.35, 0.65, 1.0, 1
+                        font_size: "12sp"
+
+                MDCard:
+                    padding: "14dp"
+                    radius: [12]
+                    md_bg_color: 0.08, 0.11, 0.15, 1
+                    MDLabel:
+                        text: "AI Model"
+                        font_style: "H6"
+                        bold: True
+                        text_color: 0.90, 0.91, 0.93, 1
+                    MDLabel:
+                        text: "Local: Gemma 3 4B (Ollama)"
+                        theme_text_color: "Custom"
+                        text_color: 0.75, 0.76, 0.80, 1
+                        font_size: "13sp"
+                    MDLabel:
+                        text: "Cloud: GPT-4o / Claude 3.5 (auto fallback)"
+                        theme_text_color: "Custom"
+                        text_color: 0.75, 0.76, 0.80, 1
+                        font_size: "13sp"
+
+                MDCard:
+                    padding: "14dp"
+                    radius: [12]
+                    md_bg_color: 0.08, 0.11, 0.15, 1
+                    MDLabel:
+                        text: "About"
+                        font_style: "H6"
+                        bold: True
+                        text_color: 0.90, 0.91, 0.93, 1
+                    MDLabel:
+                        text: "CryptoMind Pro Plus AI v6.0.0"
+                        theme_text_color: "Custom"
+                        text_color: 0.55, 0.58, 0.62, 1
+                        font_size: "13sp"
+                    MDLabel:
+                        text: "Self-evolving crypto analysis system"
+                        theme_text_color: "Custom"
+                        text_color: 0.55, 0.58, 0.62, 1
+                        font_size: "12sp"
+
+# ==================== 新闻屏幕 ====================
+<NewsScreen>:
+    name: "news"
+    MDBoxLayout:
+        orientation: "vertical"
+        padding: "12dp"
+        spacing: "8dp"
+        MDTopAppBar:
+            title: "📰 最新资讯"
+            left_action_items: [["arrow-left", lambda x: root.go_back()]]
+        ScrollView:
+            do_scroll_y: True
+            MDBoxLayout:
+                id: news_container
+                orientation: "vertical"
+                spacing: "8dp"
+                size_hint_y: None
+                height: self.minimum_height
+                padding: "8dp"
+
+# ==================== 链上数据屏幕 ====================
+<OnchainScreen>:
+    name: "onchain"
+    MDBoxLayout:
+        orientation: "vertical"
+        padding: "12dp"
+        spacing: "8dp"
+        MDTopAppBar:
+            title: "⛓️ 链上数据"
+            left_action_items: [["arrow-left", lambda x: root.go_back()]]
+        ScrollView:
+            do_scroll_y: True
+            MDBoxLayout:
+                id: onchain_container
+                orientation: "vertical"
+                spacing: "8dp"
+                size_hint_y: None
+                height: self.minimum_height
+                padding: "8dp"
+
+# ==================== 知识库屏幕 ====================
+<KnowledgeScreen>:
+    name: "knowledge"
+    MDBoxLayout:
+        orientation: "vertical"
+        padding: "12dp"
+        spacing: "8dp"
+        MDTopAppBar:
+            title: "🧠 知识库"
+            left_action_items: [["arrow-left", lambda x: root.go_back()]]
+        ScrollView:
+            do_scroll_y: True
+            MDBoxLayout:
+                id: kb_container
+                orientation: "vertical"
+                spacing: "8dp"
+                size_hint_y: None
+                height: self.minimum_height
+                padding: "8dp"
+
+# ==================== 归因分析屏幕 ====================
+<AttributionScreen>:
+    name: "attribution"
+    MDBoxLayout:
+        orientation: "vertical"
+        padding: "12dp"
+        spacing: "8dp"
+        MDTopAppBar:
+            title: "📊 归因分析"
+            left_action_items: [["arrow-left", lambda x: root.go_back()]]
+        ScrollView:
+            do_scroll_y: True
+            MDBoxLayout:
+                id: attr_container
+                orientation: "vertical"
+                spacing: "8dp"
+                size_hint_y: None
+                height: self.minimum_height
+                padding: "8dp"
+
+# ==================== Paper Trading 屏幕 ====================
+<PaperTradingScreen>:
+    name: "paper_trading"
+    MDBoxLayout:
+        orientation: "vertical"
+        padding: "12dp"
+        spacing: "8dp"
+        MDTopAppBar:
+            title: "💹 Paper Trading"
+            left_action_items: [["arrow-left", lambda x: root.go_back()]]
+        ScrollView:
+            do_scroll_y: True
+            MDBoxLayout:
+                id: pt_main
+                orientation: "vertical"
+                spacing: "8dp"
+                size_hint_y: None
+                height: self.minimum_height
+                padding: "8dp"
+                MDBoxLayout:
+                    id: pt_container
+                    orientation: "vertical"
+                    spacing: "8dp"
+                    size_hint_y: None
+                    height: self.minimum_height
+                MDBoxLayout:
+                    id: pt_positions
+                    orientation: "vertical"
+                    spacing: "8dp"
+                    size_hint_y: None
+                    height: self.minimum_height

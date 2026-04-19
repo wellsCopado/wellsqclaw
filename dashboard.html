@@ -1,0 +1,1810 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>CryptoMind Pro Plus AI</title>
+    <style>
+        :root {
+            --bg: #0D1117;
+            --card: #161B22;
+            --border: #30363D;
+            --green: #3FB950;
+            --red: #F85149;
+            --yellow: #D29922;
+            --blue: #58A6FF;
+            --purple: #BC8CFF;
+            --accent: #7C3AED;
+            --text: #C9D1D9;
+            --text-muted: #8B949E;
+            --learn: #58A6FF;
+            --analyze: #D29922;
+            --optimize: #BC8CFF;
+            --test: #F0883E;
+            --deploy: #3FB950;
+        }
+
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Helvetica, Arial, sans-serif;
+            background: var(--bg);
+            color: var(--text);
+            min-height: 100vh;
+            line-height: 1.5;
+        }
+
+        .container {
+            max-width: 1400px;
+            margin: 0 auto;
+            padding: 20px;
+        }
+
+        /* Header */
+        .header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 20px;
+            background: var(--card);
+            border: 1px solid var(--border);
+            border-radius: 12px;
+            margin-bottom: 20px;
+        }
+
+        .header-title {
+            font-size: 24px;
+            font-weight: 600;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+
+        .header-status {
+            display: flex;
+            align-items: center;
+            gap: 15px;
+        }
+
+        .status-badge {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            padding: 8px 16px;
+            background: rgba(63, 185, 80, 0.1);
+            border: 1px solid var(--green);
+            border-radius: 20px;
+            font-size: 14px;
+        }
+
+        .status-badge.error {
+            background: rgba(248, 81, 73, 0.1);
+            border-color: var(--red);
+        }
+
+        .status-dot {
+            width: 8px;
+            height: 8px;
+            border-radius: 50%;
+            background: var(--green);
+            animation: pulse 2s infinite;
+        }
+
+        .status-badge.error .status-dot {
+            background: var(--red);
+            animation: none;
+        }
+
+        @keyframes pulse {
+            0%, 100% { opacity: 1; }
+            50% { opacity: 0.5; }
+        }
+
+        .btn {
+            padding: 10px 20px;
+            background: var(--accent);
+            border: none;
+            border-radius: 8px;
+            color: white;
+            font-size: 14px;
+            cursor: pointer;
+            transition: all 0.2s;
+            display: flex;
+            align-items: center;
+            gap: 6px;
+        }
+
+        .btn:hover {
+            background: #6D28D9;
+            transform: translateY(-1px);
+        }
+
+        .btn:disabled {
+            opacity: 0.6;
+            cursor: not-allowed;
+            transform: none;
+        }
+
+        .btn-secondary {
+            background: var(--card);
+            border: 1px solid var(--border);
+        }
+
+        .btn-secondary:hover {
+            background: var(--border);
+        }
+
+        /* Metrics Row */
+        .metrics-row {
+            display: grid;
+            grid-template-columns: repeat(5, 1fr);
+            gap: 15px;
+            margin-bottom: 20px;
+        }
+
+        .metric-card {
+            background: var(--card);
+            border: 1px solid var(--border);
+            border-radius: 12px;
+            padding: 20px;
+            text-align: center;
+        }
+
+        .metric-label {
+            font-size: 12px;
+            color: var(--text-muted);
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+            margin-bottom: 8px;
+        }
+
+        .metric-value {
+            font-size: 28px;
+            font-weight: 700;
+        }
+
+        .metric-value.bullish { color: var(--green); }
+        .metric-value.bearish { color: var(--red); }
+        .metric-value.neutral { color: var(--yellow); }
+
+        /* RSI Gauge */
+        .rsi-gauge {
+            position: relative;
+            width: 80px;
+            height: 40px;
+            margin: 0 auto;
+        }
+
+        .rsi-gauge-bg {
+            width: 80px;
+            height: 40px;
+            border-radius: 40px 40px 0 0;
+            background: linear-gradient(to right, var(--red), var(--yellow) 30%, var(--green) 50%, var(--yellow) 70%, var(--red));
+            position: relative;
+            overflow: hidden;
+        }
+
+        .rsi-gauge-bg::after {
+            content: '';
+            position: absolute;
+            bottom: 0;
+            left: 50%;
+            transform: translateX(-50%);
+            width: 4px;
+            height: 35px;
+            background: white;
+            border-radius: 2px;
+            transition: transform 0.3s;
+        }
+
+        .rsi-value {
+            position: absolute;
+            bottom: -5px;
+            left: 50%;
+            transform: translateX(-50%);
+            font-size: 14px;
+            font-weight: 600;
+        }
+
+        /* Progress Bar */
+        .progress-container {
+            margin-top: 10px;
+        }
+
+        .progress-bar {
+            height: 8px;
+            background: var(--border);
+            border-radius: 4px;
+            overflow: hidden;
+        }
+
+        .progress-fill {
+            height: 100%;
+            border-radius: 4px;
+            transition: width 0.5s ease;
+        }
+
+        /* Radar Chart */
+        .radar-section {
+            background: var(--card);
+            border: 1px solid var(--border);
+            border-radius: 12px;
+            padding: 25px;
+            margin-bottom: 20px;
+        }
+
+        .radar-title {
+            font-size: 16px;
+            font-weight: 600;
+            margin-bottom: 20px;
+            text-align: center;
+        }
+
+        .radar-container {
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            position: relative;
+            height: 280px;
+        }
+
+        .radar-svg {
+            width: 260px;
+            height: 260px;
+        }
+
+        .radar-legend {
+            display: flex;
+            justify-content: center;
+            gap: 30px;
+            margin-top: 20px;
+            flex-wrap: wrap;
+        }
+
+        .legend-item {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            font-size: 13px;
+        }
+
+        .legend-dot {
+            width: 10px;
+            height: 10px;
+            border-radius: 50%;
+        }
+
+        /* Two Column Layout */
+        .two-col {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 20px;
+            margin-bottom: 20px;
+        }
+
+        .panel {
+            background: var(--card);
+            border: 1px solid var(--border);
+            border-radius: 12px;
+            padding: 20px;
+        }
+
+        .panel-title {
+            font-size: 16px;
+            font-weight: 600;
+            margin-bottom: 15px;
+            padding-bottom: 10px;
+            border-bottom: 1px solid var(--border);
+        }
+
+        .tech-item, .signal-item {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 10px 0;
+            border-bottom: 1px solid var(--border);
+        }
+
+        .tech-item:last-child, .signal-item:last-child {
+            border-bottom: none;
+        }
+
+        .tech-label, .signal-label {
+            font-size: 14px;
+            color: var(--text-muted);
+        }
+
+        .tech-value, .signal-value {
+            font-size: 14px;
+            font-weight: 500;
+        }
+
+        .signal-badge {
+            padding: 4px 12px;
+            border-radius: 12px;
+            font-size: 12px;
+            font-weight: 600;
+        }
+
+        .signal-badge.buy {
+            background: rgba(63, 185, 80, 0.2);
+            color: var(--green);
+        }
+
+        .signal-badge.sell {
+            background: rgba(248, 81, 73, 0.2);
+            color: var(--red);
+        }
+
+        .signal-badge.neutral {
+            background: rgba(210, 153, 34, 0.2);
+            color: var(--yellow);
+        }
+
+        .factor-list {
+            margin-top: 15px;
+        }
+
+        .factor-item {
+            display: flex;
+            justify-content: space-between;
+            padding: 6px 0;
+            font-size: 13px;
+        }
+
+        .factor-bullish { color: var(--green); }
+        .factor-bearish { color: var(--red); }
+
+        /* Tabs */
+        .tabs-section {
+            background: var(--card);
+            border: 1px solid var(--border);
+            border-radius: 12px;
+            margin-bottom: 20px;
+            overflow: hidden;
+        }
+
+        .tabs-header {
+            display: flex;
+            background: var(--bg);
+            border-bottom: 1px solid var(--border);
+        }
+
+        .tab-radio {
+            display: none;
+        }
+
+        .tab-label {
+            flex: 1;
+            padding: 15px 20px;
+            text-align: center;
+            cursor: pointer;
+            font-size: 14px;
+            font-weight: 500;
+            transition: all 0.2s;
+            border-bottom: 2px solid transparent;
+        }
+
+        .tab-label:hover {
+            background: var(--card);
+        }
+
+        .tab-radio:checked + .tab-label {
+            background: var(--card);
+            border-bottom-color: var(--accent);
+            color: var(--accent);
+        }
+
+        .tab-content {
+            display: none;
+            padding: 20px;
+        }
+
+        #tab-attribution:checked ~ .tab-content-attribution,
+        #tab-validation:checked ~ .tab-content-validation,
+        #tab-knowledge:checked ~ .tab-content-knowledge,
+        #tab-derivatives:checked ~ .tab-content-derivatives {
+            display: block;
+        }
+
+        .data-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 15px;
+        }
+
+        .data-item {
+            padding: 12px;
+            background: var(--bg);
+            border-radius: 8px;
+        }
+
+        .data-item-label {
+            font-size: 12px;
+            color: var(--text-muted);
+            margin-bottom: 4px;
+        }
+
+        .data-item-value {
+            font-size: 16px;
+            font-weight: 600;
+        }
+
+        /* Evolution & Cleaner */
+        .bottom-section {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 20px;
+        }
+
+        .stage-progress {
+            display: flex;
+            margin: 20px 0;
+            position: relative;
+        }
+
+        .stage {
+            flex: 1;
+            text-align: center;
+            position: relative;
+        }
+
+        .stage::before {
+            content: '';
+            position: absolute;
+            top: 15px;
+            left: 0;
+            right: 0;
+            height: 4px;
+            background: var(--border);
+        }
+
+        .stage:first-child::before {
+            left: 50%;
+        }
+
+        .stage:last-child::before {
+            right: 50%;
+        }
+
+        .stage.completed::before {
+            background: var(--deploy);
+        }
+
+        .stage-dot {
+            width: 30px;
+            height: 30px;
+            border-radius: 50%;
+            background: var(--border);
+            margin: 0 auto;
+            position: relative;
+            z-index: 1;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 12px;
+            font-weight: 600;
+        }
+
+        .stage.completed .stage-dot {
+            background: var(--deploy);
+            color: white;
+        }
+
+        .stage.active .stage-dot {
+            background: var(--accent);
+            color: white;
+            box-shadow: 0 0 0 4px rgba(124, 58, 237, 0.3);
+        }
+
+        .stage-label {
+            font-size: 11px;
+            margin-top: 8px;
+            text-transform: uppercase;
+        }
+
+        .history-list {
+            max-height: 200px;
+            overflow-y: auto;
+            margin: 15px 0;
+        }
+
+        .history-item {
+            padding: 10px;
+            background: var(--bg);
+            border-radius: 6px;
+            margin-bottom: 8px;
+            font-size: 13px;
+        }
+
+        .history-header {
+            display: flex;
+            justify-content: space-between;
+            margin-bottom: 4px;
+        }
+
+        .history-cycle {
+            font-weight: 600;
+            color: var(--accent);
+        }
+
+        .improvement-badge {
+            padding: 2px 8px;
+            border-radius: 10px;
+            font-size: 11px;
+            background: rgba(63, 185, 80, 0.2);
+            color: var(--green);
+        }
+
+        /* Storage Progress */
+        .storage-section {
+            margin: 15px 0;
+        }
+
+        .storage-header {
+            display: flex;
+            justify-content: space-between;
+            margin-bottom: 8px;
+            font-size: 14px;
+        }
+
+        .storage-bar {
+            height: 20px;
+            background: var(--border);
+            border-radius: 10px;
+            overflow: hidden;
+        }
+
+        .storage-fill {
+            height: 100%;
+            border-radius: 10px;
+            transition: all 0.5s;
+            display: flex;
+            align-items: center;
+            justify-content: flex-end;
+            padding-right: 10px;
+            font-size: 12px;
+            font-weight: 600;
+            color: white;
+        }
+
+        .storage-fill.low { background: var(--green); }
+        .storage-fill.medium { background: var(--yellow); }
+        .storage-fill.high { background: var(--red); }
+
+        .cleaner-actions {
+            display: flex;
+            gap: 10px;
+            margin: 15px 0;
+        }
+
+        .data-types-grid {
+            display: grid;
+            grid-template-columns: repeat(3, 1fr);
+            gap: 8px;
+            margin-top: 15px;
+        }
+
+        .data-type-item {
+            padding: 8px;
+            background: var(--bg);
+            border-radius: 6px;
+            font-size: 11px;
+            text-align: center;
+        }
+
+        .data-type-name {
+            color: var(--text-muted);
+            margin-bottom: 4px;
+        }
+
+        .data-type-count {
+            font-weight: 600;
+            font-size: 13px;
+        }
+
+        /* Loading & Error States */
+        .loading {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            padding: 40px;
+        }
+
+        .spinner {
+            width: 40px;
+            height: 40px;
+            border: 3px solid var(--border);
+            border-top-color: var(--accent);
+            border-radius: 50%;
+            animation: spin 1s linear infinite;
+        }
+
+        @keyframes spin {
+            to { transform: rotate(360deg); }
+        }
+
+        .error-state {
+            text-align: center;
+            padding: 40px;
+            color: var(--red);
+        }
+
+        .error-icon {
+            font-size: 40px;
+            margin-bottom: 10px;
+        }
+
+        /* Responsive */
+        @media (max-width: 1024px) {
+            .metrics-row {
+                grid-template-columns: repeat(3, 1fr);
+            }
+            
+            .two-col, .bottom-section {
+                grid-template-columns: 1fr;
+            }
+        }
+
+        @media (max-width: 768px) {
+            .metrics-row {
+                grid-template-columns: repeat(2, 1fr);
+            }
+            
+            .header {
+                flex-direction: column;
+                gap: 15px;
+                text-align: center;
+            }
+            
+            .radar-legend {
+                gap: 15px;
+            }
+        }
+
+        /* Last Update */
+        .last-update {
+            font-size: 12px;
+            color: var(--text-muted);
+            margin-top: 10px;
+            text-align: center;
+        }
+
+        /* News section */
+        .news-list {
+            max-height: 300px;
+            overflow-y: auto;
+        }
+
+        .news-item {
+            padding: 12px;
+            background: var(--bg);
+            border-radius: 8px;
+            margin-bottom: 8px;
+        }
+
+        .news-title {
+            font-size: 14px;
+            font-weight: 500;
+            margin-bottom: 4px;
+        }
+
+        .news-meta {
+            font-size: 12px;
+            color: var(--text-muted);
+        }
+
+        .sentiment-badge {
+            padding: 2px 8px;
+            border-radius: 10px;
+            font-size: 11px;
+        }
+
+        .sentiment-positive { background: rgba(63, 185, 80, 0.2); color: var(--green); }
+        .sentiment-negative { background: rgba(248, 81, 73, 0.2); color: var(--red); }
+        .sentiment-neutral { background: rgba(210, 153, 34, 0.2); color: var(--yellow); }
+    </style>
+
+    <!-- Chart Libraries -->
+    <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/lightweight-charts@4.1.0/dist/lightweight-charts.standalone.production.min.js"></script>
+    <style>
+        .viz-card { background: var(--card); border: 1px solid var(--border); border-radius: 8px; padding: 12px; margin-bottom: 12px; }
+        .viz-title { color: var(--text); font-size: 13px; font-weight: 600; margin-bottom: 8px; }
+        .chart-container { position: relative; height: 200px; width: 100%; }
+        .news-item-viz { padding: 8px 0; border-bottom: 1px solid var(--border); }
+        .news-item-viz:last-child { border-bottom: none; }
+        .news-title-viz { color: var(--text); font-size: 12px; line-height: 1.4; }
+        .news-meta-viz { color: var(--text-muted); font-size: 10px; margin-top: 4px; }
+        .tab-bar { display: flex; gap: 4px; margin-bottom: 12px; flex-wrap: wrap; }
+        .tab-btn { padding: 4px 10px; border: 1px solid var(--border); background: transparent; color: var(--text-muted); border-radius: 4px; cursor: pointer; font-size: 11px; }
+        .tab-btn.active { background: var(--accent); color: white; border-color: var(--accent); }
+        .metric-row-viz { display: flex; justify-content: space-between; padding: 4px 0; font-size: 12px; }
+        .metric-label-viz { color: var(--text-muted); }
+        .metric-value-viz { color: var(--text); font-weight: 600; }
+        .signal-badge { display: inline-block; padding: 2px 8px; border-radius: 4px; font-size: 11px; font-weight: 600; }
+        .signal-buy { background: rgba(63,185,80,0.2); color: var(--green); }
+        .signal-sell { background: rgba(248,81,73,0.2); color: var(--red); }
+        .signal-neutral { background: rgba(210,153,34,0.2); color: var(--yellow); }
+        #klineChart { height: 280px; border-radius: 6px; overflow: hidden; }
+        #fundingChart, #oiChart { height: 160px; }
+        .panel-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; }
+        @media(max-width:768px){ .panel-grid { grid-template-columns: 1fr; } }
+    </style>
+</head>
+<body>
+<!-- 免责声明弹窗 -->
+<div id="disclaimerModal" style="
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background: rgba(0,0,0,0.8);
+    z-index: 9999;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+">
+    <div style="
+        background: var(--card);
+        border: 1px solid var(--border);
+        border-radius: 12px;
+        padding: 24px;
+        max-width: 500px;
+        margin: 20px;
+        text-align: center;
+    ">
+        <h2 style="color: var(--red); margin-bottom: 16px;">⚠️ 免责声明</h2>
+        <p style="color: var(--text); line-height: 1.6; margin-bottom: 16px;">
+            本系统提供的所有分析、信号、建议仅供参考，<strong style="color: var(--red);">不构成任何投资建议</strong>。
+        </p>
+        <p style="color: var(--text-muted); line-height: 1.6; margin-bottom: 24px;">
+            加密货币交易具有高风险，可能导致全部本金损失。使用者应自行承担所有交易风险和决策责任。
+        </p>
+        <button onclick="closeDisclaimer()" style="
+            background: var(--accent);
+            color: white;
+            border: none;
+            padding: 12px 32px;
+            border-radius: 6px;
+            cursor: pointer;
+            font-size: 16px;
+        ">我已了解风险</button>
+    </div>
+</div>
+<script>
+function closeDisclaimer() {
+    document.getElementById('disclaimerModal').style.display = 'none';
+    localStorage.setItem('disclaimerAccepted', 'true');
+}
+// 检查是否已接受
+if (localStorage.getItem('disclaimerAccepted') === 'true') {
+    document.getElementById('disclaimerModal').style.display = 'none';
+}
+</script>
+
+    <div class="container">
+        <!-- Header -->
+        <header class="header">
+            <div class="header-title">
+                <span>CryptoMind Pro Plus AI</span>
+                <span>🧠</span>
+            </div>
+            <div class="header-status">
+                <div class="status-badge" id="statusBadge">
+                    <div class="status-dot"></div>
+                    <span id="statusText">已连接</span>
+                </div>
+                <button class="btn" id="refreshBtn" onclick="refreshAll()">
+                    <span>🔄</span>
+                    <span>刷新</span>
+                </button>
+            </div>
+        </header>
+
+        <!-- Metrics Row -->
+        <div class="metrics-row">
+            <div class="metric-card">
+                <div class="metric-label">BTC 价格</div>
+                <div class="metric-value" id="btcPrice">--</div>
+            </div>
+            <div class="metric-card">
+                <div class="metric-label">趋势</div>
+                <div class="metric-value" id="trend">--</div>
+            </div>
+            <div class="metric-card">
+                <div class="metric-label">RSI</div>
+                <div class="rsi-gauge">
+                    <div class="rsi-gauge-bg" id="rsiGauge"></div>
+                    <div class="rsi-value" id="rsiValue">--</div>
+                </div>
+            </div>
+            <div class="metric-card">
+                <div class="metric-label">MACD</div>
+                <div class="metric-value" id="macdStatus">--</div>
+            </div>
+            <div class="metric-card">
+                <div class="metric-label">综合评分</div>
+                <div class="metric-value" id="overallScore">--</div>
+                <div class="progress-container">
+                    <div class="progress-bar">
+                        <div class="progress-fill" id="scoreBar" style="width: 0%; background: var(--accent);"></div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Radar Chart -->
+        <div class="radar-section">
+            <div class="radar-title">四维评分分析</div>
+            <div class="radar-container">
+                <svg class="radar-svg" viewBox="0 0 200 200" id="radarChart">
+                    <!-- Background -->
+                    <polygon points="100,10 180,60 180,140 100,190 20,140 20,60" fill="none" stroke="var(--border)" stroke-width="1"/>
+                    <polygon points="100,40 150,70 150,130 100,160 50,130 50,70" fill="none" stroke="var(--border)" stroke-width="1"/>
+                    <polygon points="100,70 120,80 120,120 100,130 80,120 80,80" fill="none" stroke="var(--border)" stroke-width="1"/>
+                    <!-- Axes -->
+                    <line x1="100" y1="10" x2="100" y2="190" stroke="var(--border)" stroke-width="1"/>
+                    <line x1="20" y1="60" x2="180" y2="140" stroke="var(--border)" stroke-width="1"/>
+                    <line x1="180" y1="60" x2="20" y2="140" stroke="var(--border)" stroke-width="1"/>
+                    <line x1="20" y1="100" x2="180" y2="100" stroke="var(--border)" stroke-width="1"/>
+                    <!-- Data polygon (will be updated by JS) -->
+                    <polygon id="radarPolygon" fill="rgba(124, 58, 237, 0.3)" stroke="var(--accent)" stroke-width="2" points="100,10 180,60 180,140 100,190 20,140 20,60"/>
+                    <!-- Points -->
+                    <circle id="radarPoint1" cx="100" cy="10" r="4" fill="var(--blue)"/>
+                    <circle id="radarPoint2" cx="180" cy="60" r="4" fill="var(--green)"/>
+                    <circle id="radarPoint3" cx="180" cy="140" r="4" fill="var(--yellow)"/>
+                    <circle id="radarPoint4" cx="100" cy="190" r="4" fill="var(--purple)"/>
+                    <!-- Labels -->
+                    <text x="100" y="5" text-anchor="middle" fill="var(--text)" font-size="10">技术面</text>
+                    <text x="188" y="60" text-anchor="start" fill="var(--text)" font-size="10">基本面</text>
+                    <text x="188" y="145" text-anchor="start" fill="var(--text)" font-size="10">情绪面</text>
+                    <text x="100" y="205" text-anchor="middle" fill="var(--text)" font-size="10">链上</text>
+                </svg>
+            </div>
+            <div class="radar-legend">
+                <div class="legend-item">
+                    <div class="legend-dot" style="background: var(--blue)"></div>
+                    <span>技术面 30%</span>
+                </div>
+                <div class="legend-item">
+                    <div class="legend-dot" style="background: var(--green)"></div>
+                    <span>基本面 30%</span>
+                </div>
+                <div class="legend-item">
+                    <div class="legend-dot" style="background: var(--yellow)"></div>
+                    <span>情绪面 20%</span>
+                </div>
+                <div class="legend-item">
+                    <div class="legend-dot" style="background: var(--purple)"></div>
+                    <span>链上 20%</span>
+                </div>
+            </div>
+        </div>
+
+        <!-- Two Column: Technical & Signal -->
+        <div class="two-col">
+            <div class="panel">
+                <div class="panel-title">📊 技术分析</div>
+                <div id="techAnalysis">
+                    <div class="loading"><div class="spinner"></div></div>
+                </div>
+            </div>
+            <div class="panel">
+                <div class="panel-title">🎯 信号与风险</div>
+                <div id="signalPanel">
+                    <div class="loading"><div class="spinner"></div></div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Tabs Section -->
+        <div class="tabs-section">
+            <input type="radio" name="tabs" id="tab-attribution" class="tab-radio" checked>
+            <label for="tab-attribution" class="tab-label">归因分析</label>
+            
+            <input type="radio" name="tabs" id="tab-validation" class="tab-radio">
+            <label for="tab-validation" class="tab-label">验证报告</label>
+            
+            <input type="radio" name="tabs" id="tab-knowledge" class="tab-radio">
+            <label for="tab-knowledge" class="tab-label">知识库</label>
+            
+            <input type="radio" name="tabs" id="tab-derivatives" class="tab-radio">
+            <label for="tab-derivatives" class="tab-label">衍生品数据</label>
+
+            <div class="tab-content tab-content-attribution">
+                <div id="attributionContent">
+                    <div class="loading"><div class="spinner"></div></div>
+                </div>
+            </div>
+
+            <div class="tab-content tab-content-validation">
+                <div id="validationContent">
+                    <div class="loading"><div class="spinner"></div></div>
+                </div>
+            </div>
+
+            <div class="tab-content tab-content-knowledge">
+                <div id="knowledgeContent">
+                    <div class="loading"><div class="spinner"></div></div>
+                </div>
+            </div>
+
+            <div class="tab-content tab-content-derivatives">
+                <div id="derivativesContent">
+                    <div class="loading"><div class="spinner"></div></div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Bottom Section: Evolution & Cleaner -->
+        <div class="bottom-section">
+            <div class="panel">
+                <div class="panel-title">🧬 自进化引擎</div>
+                <div id="evolutionPanel">
+                    <div class="loading"><div class="spinner"></div></div>
+                </div>
+            </div>
+            <div class="panel">
+                <div class="panel-title">🧹 数据清理</div>
+                <div id="cleanerPanel">
+                    <div class="loading"><div class="spinner"></div></div>
+                </div>
+            </div>
+        </div>
+
+        <div class="last-update">
+            最后更新: <span id="lastUpdateTime">--</span>
+        </div>
+    </div>
+
+    <script>
+        const API_BASE = 'http://localhost:8765';
+        let refreshInterval;
+
+        // Utility Functions
+        async function fetchAPI(endpoint) {
+            try {
+                const response = await fetch(`${API_BASE}${endpoint}`);
+                if (!response.ok) throw new Error(`HTTP ${response.status}`);
+                return await response.json();
+            } catch (error) {
+                console.error(`API Error [${endpoint}]:`, error);
+                throw error;
+            }
+        }
+
+        function formatNumber(num, decimals = 2) {
+            if (num === null || num === undefined) return '--';
+            return Number(num).toLocaleString('en-US', { minimumFractionDigits: decimals, maximumFractionDigits: decimals });
+        }
+
+        function formatPrice(price) {
+            if (!price) return '--';
+            return '$' + formatNumber(price, 2);
+        }
+
+        function updateTime() {
+            const now = new Date();
+            document.getElementById('lastUpdateTime').textContent = now.toLocaleString('zh-CN');
+        }
+
+        // Update Status
+        async function updateStatus() {
+            try {
+                await fetchAPI('/api/health');
+                document.getElementById('statusBadge').classList.remove('error');
+                document.getElementById('statusText').textContent = '已连接';
+            } catch (error) {
+                document.getElementById('statusBadge').classList.add('error');
+                document.getElementById('statusText').textContent = '连接失败';
+            }
+        }
+
+        // Update BTC Price
+        async function updateBTCPrice() {
+            try {
+                const data = await fetchAPI('/api/btc/price');
+                document.getElementById('btcPrice').textContent = formatPrice(data.price || data);
+            } catch (error) {
+                document.getElementById('btcPrice').textContent = '错误';
+            }
+        }
+
+        // Update Technical Analysis
+        async function updateTechAnalysis() {
+            const container = document.getElementById('techAnalysis');
+            try {
+                const data = await fetchAPI('/api/analysis/technical');
+                
+                // Update metrics row
+                const rsi = data.rsi?.value || data.rsi || 50;
+                document.getElementById('rsiValue').textContent = formatNumber(rsi, 1);
+                
+                const rsiStatus = rsi > 70 ? '超买' : rsi < 30 ? '超卖' : '中性';
+                const rsiClass = rsi > 70 ? 'bearish' : rsi < 30 ? 'bullish' : 'neutral';
+                
+                // MACD
+                const macd = data.macd || {};
+                const macdSignal = macd.signal || macd.histogram > 0 ? '金叉' : '死叉';
+                const macdClass = (macd.histogram > 0) ? 'bullish' : 'bearish';
+                document.getElementById('macdStatus').textContent = macdSignal;
+                document.getElementById('macdStatus').className = `metric-value ${macdClass}`;
+
+                // Technical panel
+                container.innerHTML = `
+                    <div class="tech-item">
+                        <span class="tech-label">RSI (14)</span>
+                        <span class="tech-value ${rsiClass}">${formatNumber(rsi, 1)} - ${rsiStatus}</span>
+                    </div>
+                    <div class="tech-item">
+                        <span class="tech-label">MACD</span>
+                        <span class="tech-value ${macdClass}">${macdSignal}</span>
+                    </div>
+                    <div class="tech-item">
+                        <span class="tech-label">布林带</span>
+                        <span class="tech-value">${data.bollinger?.position || '--'} / 带宽 ${formatNumber(data.bollinger?.bandwidth, 1) || '--'}</span>
+                    </div>
+                    <div class="tech-item">
+                        <span class="tech-label">EMA 均线</span>
+                        <span class="tech-value">${data.ema?.alignment || '--'}</span>
+                    </div>
+                    <div class="tech-item">
+                        <span class="tech-label">ATR 波动率</span>
+                        <span class="tech-value">${formatNumber(data.atr?.value, 2) || '--'} (${formatNumber(data.atr?.percent, 2) || '--'}%)</span>
+                    </div>
+                `;
+            } catch (error) {
+                container.innerHTML = `<div class="error-state"><div class="error-icon">⚠️</div><div>技术分析数据加载失败</div></div>`;
+            }
+        }
+
+        // Update Multi-Dimension Analysis
+        async function updateMultiDim() {
+            try {
+                const data = await fetchAPI('/api/analysis/multi-dim');
+                
+                // Update overall score
+                const score = data.overall_score || data.score || 50;
+                document.getElementById('overallScore').textContent = formatNumber(score, 0) + '分';
+                document.getElementById('scoreBar').style.width = score + '%';
+                
+                // Update trend
+                const trend = data.trend || data.direction || '中性';
+                const trendClass = trend.includes('看多') || trend.includes('UP') ? 'bullish' : 
+                                   trend.includes('看空') || trend.includes('DOWN') ? 'bearish' : 'neutral';
+                document.getElementById('trend').textContent = trend;
+                document.getElementById('trend').className = `metric-value ${trendClass}`;
+
+                // Update radar chart
+                const dim = data.dimensions || {};
+                const tech = dim.technical || dim.tech || 50;
+                const fund = dim.fundamental || dim.fund || 50;
+                const sent = dim.sentiment || dim.sent || 50;
+                const onchain = dim.onchain || dim.chain || 50;
+
+                // Calculate radar points (center 100,100, radius 90)
+                const centerR = 90;
+                const points = [
+                    { x: 100, y: 100 - (tech/100) * centerR }, // top
+                    { x: 100 + (fund/100) * centerR * 0.7, y: 100 - (fund/100) * centerR * 0.4 }, // right-top
+                    { x: 100 + (sent/100) * centerR * 0.7, y: 100 + (sent/100) * centerR * 0.4 }, // right-bottom
+                    { x: 100, y: 100 + (onchain/100) * centerR }, // bottom
+                    { x: 100 - (sent/100) * centerR * 0.35, y: 100 + (sent/100) * centerR * 0.35 }, // left-bottom
+                    { x: 100 - (fund/100) * centerR * 0.35, y: 100 - (fund/100) * centerR * 0.35 }, // left-top
+                ];
+
+                const polygon = document.getElementById('radarPolygon');
+                polygon.setAttribute('points', points.map(p => `${p.x},${p.y}`).join(' '));
+
+            } catch (error) {
+                console.error('Multi-dim update error:', error);
+            }
+        }
+
+        // Update Signal Panel
+        async function updateSignal() {
+            const container = document.getElementById('signalPanel');
+            try {
+                const data = await fetchAPI('/api/signal');
+                
+                const signal = data.signal || data.action || 'NEUTRAL';
+                const confidence = data.confidence || 50;
+                const risk = data.risk_level || 'MEDIUM';
+                const bullishFactors = data.bullish_factors || data.bullish || [];
+                const bearishFactors = data.bearish_factors || data.bearish || [];
+
+                const signalClass = signal.toUpperCase().includes('BUY') ? 'buy' : 
+                                    signal.toUpperCase().includes('SELL') ? 'sell' : 'neutral';
+                
+                const riskColor = risk.toUpperCase() === 'HIGH' ? 'var(--red)' : 
+                                  risk.toUpperCase() === 'LOW' ? 'var(--green)' : 'var(--yellow)';
+
+                container.innerHTML = `
+                    <div class="signal-item">
+                        <span class="signal-label">交易信号</span>
+                        <span class="signal-badge ${signalClass}">${signal.toUpperCase()}</span>
+                    </div>
+                    <div class="signal-item">
+                        <span class="signal-label">置信度</span>
+                        <span class="signal-value">${formatNumber(confidence, 0)}%</span>
+                    </div>
+                    <div class="signal-item">
+                        <span class="signal-label">风险等级</span>
+                        <span class="signal-value" style="color: ${riskColor}">${risk.toUpperCase()}</span>
+                    </div>
+                    <div class="factor-list">
+                        <div style="font-size: 13px; margin-bottom: 8px; color: var(--green);">📈 看多因子</div>
+                        ${bullishFactors.slice(0, 3).map(f => `<div class="factor-item factor-bullish">• ${f}</div>`).join('') || '<div class="factor-item">暂无</div>'}
+                    </div>
+                    <div class="factor-list">
+                        <div style="font-size: 13px; margin-bottom: 8px; color: var(--red);">📉 看空因子</div>
+                        ${bearishFactors.slice(0, 3).map(f => `<div class="factor-item factor-bearish">• ${f}</div>`).join('') || '<div class="factor-item">暂无</div>'}
+                    </div>
+                `;
+            } catch (error) {
+                container.innerHTML = `<div class="error-state"><div class="error-icon">⚠️</div><div>信号数据加载失败</div></div>`;
+            }
+        }
+
+        // Update Attribution
+        async function updateAttribution() {
+            const container = document.getElementById('attributionContent');
+            try {
+                const data = await fetchAPI('/api/attribution/summary');
+                
+                container.innerHTML = `
+                    <div class="data-grid">
+                        <div class="data-item">
+                            <div class="data-item-label">技术面贡献</div>
+                            <div class="data-item-value" style="color: var(--blue)">${formatNumber(data.technical_contribution || data.technical, 1)}%</div>
+                        </div>
+                        <div class="data-item">
+                            <div class="data-item-label">基本面贡献</div>
+                            <div class="data-item-value" style="color: var(--green)">${formatNumber(data.fundamental_contribution || data.fundamental, 1)}%</div>
+                        </div>
+                        <div class="data-item">
+                            <div class="data-item-label">情绪面贡献</div>
+                            <div class="data-item-value" style="color: var(--yellow)">${formatNumber(data.sentiment_contribution || data.sentiment, 1)}%</div>
+                        </div>
+                        <div class="data-item">
+                            <div class="data-item-label">链上数据贡献</div>
+                            <div class="data-item-value" style="color: var(--purple)">${formatNumber(data.onchain_contribution || data.onchain, 1)}%</div>
+                        </div>
+                        <div class="data-item">
+                            <div class="data-item-label">模型准确率</div>
+                            <div class="data-item-value">${formatNumber(data.accuracy || 0, 1)}%</div>
+                        </div>
+                        <div class="data-item">
+                            <div class="data-item-label">历史样本数</div>
+                            <div class="data-item-value">${formatNumber(data.samples || 0, 0)}</div>
+                        </div>
+                    </div>
+                `;
+            } catch (error) {
+                container.innerHTML = `<div class="error-state">归因数据加载失败</div>`;
+            }
+        }
+
+        // Update Validation
+        async function updateValidation() {
+            const container = document.getElementById('validationContent');
+            try {
+                const data = await fetchAPI('/api/validation/report');
+                
+                container.innerHTML = `
+                    <div class="data-grid">
+                        <div class="data-item">
+                            <div class="data-item-label">验证周期数</div>
+                            <div class="data-item-value">${data.cycles || data.total_cycles || 0}</div>
+                        </div>
+                        <div class="data-item">
+                            <div class="data-item-label">通过率</div>
+                            <div class="data-item-value" style="color: var(--green)">${formatNumber(data.pass_rate || 0, 1)}%</div>
+                        </div>
+                        <div class="data-item">
+                            <div class="data-item-label">平均偏差</div>
+                            <div class="data-item-value">${formatNumber(data.avg_deviation || 0, 2)}%</div>
+                        </div>
+                        <div class="data-item">
+                            <div class="data-item-label">最近验证时间</div>
+                            <div class="data-item-value" style="font-size: 13px;">${data.last_validation || '--'}</div>
+                        </div>
+                    </div>
+                `;
+            } catch (error) {
+                container.innerHTML = `<div class="error-state">验证报告加载失败</div>`;
+            }
+        }
+
+        // Update Knowledge
+        async function updateKnowledge() {
+            const container = document.getElementById('knowledgeContent');
+            try {
+                const data = await fetchAPI('/api/knowledge/stats');
+                
+                container.innerHTML = `
+                    <div class="data-grid">
+                        <div class="data-item">
+                            <div class="data-item-label">知识条目</div>
+                            <div class="data-item-value">${formatNumber(data.total_patterns || data.total, 0)}</div>
+                        </div>
+                        <div class="data-item">
+                            <div class="data-item-label">有效模式</div>
+                            <div class="data-item-value" style="color: var(--green)">${formatNumber(data.valid_patterns || data.valid, 0)}</div>
+                        </div>
+                        <div class="data-item">
+                            <div class="data-item-label">相似匹配</div>
+                            <div class="data-item-value">${formatNumber(data.similar_matches || 0, 0)}</div>
+                        </div>
+                        <div class="data-item">
+                            <div class="data-item-label">最后更新</div>
+                            <div class="data-item-value" style="font-size: 13px;">${data.last_update || '--'}</div>
+                        </div>
+                    </div>
+                `;
+            } catch (error) {
+                container.innerHTML = `<div class="error-state">知识库数据加载失败</div>`;
+            }
+        }
+
+        // Update Derivatives
+        async function updateDerivatives() {
+            const container = document.getElementById('derivativesContent');
+            try {
+                const data = await fetchAPI('/api/derivatives/summary');
+                
+                container.innerHTML = `
+                    <div class="data-grid">
+                        <div class="data-item">
+                            <div class="data-item-label">持仓量</div>
+                            <div class="data-item-value">${formatPrice(data.open_interest || data.oi)}</div>
+                        </div>
+                        <div class="data-item">
+                            <div class="data-item-label">资金费率</div>
+                            <div class="data-item-value" style="color: ${(data.funding_rate || 0) > 0 ? 'var(--green)' : 'var(--red)'}">
+                                ${formatNumber(data.funding_rate || 0, 4)}%
+                            </div>
+                        </div>
+                        <div class="data-item">
+                            <div class="data-item-label">24h成交额</div>
+                            <div class="data-item-value">${formatPrice(data.volume_24h || data.volume)}</div>
+                        </div>
+                        <div class="data-item">
+                            <div class="data-item-label">多空比</div>
+                            <div class="data-item-value">${formatNumber(data.long_short_ratio || data.ls_ratio, 2)}</div>
+                        </div>
+                    </div>
+                `;
+            } catch (error) {
+                container.innerHTML = `<div class="error-state">衍生品数据加载失败</div>`;
+            }
+        }
+
+        // Update Evolution
+        async function updateEvolution() {
+            const container = document.getElementById('evolutionPanel');
+            try {
+                const data = await fetchAPI('/api/evolution/history');
+                const history = data.history || data.cycles || [];
+                const current = data.current || history[0] || {};
+                const stage = current.stage || current.phase || 1;
+                const improvement = current.improvement || current.gain || 0;
+
+                const stages = ['learn', 'analyze', 'optimize', 'test', 'deploy'];
+                const stageNames = ['学习', '分析', '优化', '测试', '部署'];
+
+                container.innerHTML = `
+                    <div class="stage-progress">
+                        ${stages.map((s, i) => `
+                            <div class="stage ${i < stage ? 'completed' : ''} ${i === stage - 1 ? 'active' : ''}">
+                                <div class="stage-dot" style="background: ${i < stage ? 'var(--deploy)' : i === stage - 1 ? 'var(--accent)' : 'var(--border)'}">
+                                    ${i < stage ? '✓' : i + 1}
+                                </div>
+                                <div class="stage-label" style="color: var(--${s})">${stageNames[i]}</div>
+                            </div>
+                        `).join('')}
+                    </div>
+                    <div style="text-align: center; margin: 15px 0;">
+                        <div style="font-size: 12px; color: var(--text-muted);">当前改进幅度</div>
+                        <div style="font-size: 24px; font-weight: 700; color: ${improvement >= 0 ? 'var(--green)' : 'var(--red)'}">
+                            ${improvement >= 0 ? '+' : ''}${formatNumber(improvement, 2)}%
+                        </div>
+                    </div>
+                    <div class="history-list">
+                        ${history.slice(0, 5).map((h, i) => `
+                            <div class="history-item">
+                                <div class="history-header">
+                                    <span class="history-cycle">周期 #${h.cycle || h.id || i + 1}</span>
+                                    <span class="improvement-badge">${h.improvement >= 0 ? '+' : ''}${formatNumber(h.improvement || h.gain || 0, 2)}%</span>
+                                </div>
+                                <div style="color: var(--text-muted); font-size: 12px;">${h.timestamp || h.date || '--'}</div>
+                            </div>
+                        `).join('')}
+                    </div>
+                    <button class="btn" onclick="triggerEvolution()" style="width: 100%; margin-top: 10px;">
+                        🚀 触发新周期
+                    </button>
+                `;
+            } catch (error) {
+                container.innerHTML = `<div class="error-state">进化引擎数据加载失败</div>`;
+            }
+        }
+
+        // Trigger Evolution
+        async function triggerEvolution() {
+            try {
+                await fetch(`${API_BASE}/api/evolution/trigger`, { method: 'POST' });
+                updateEvolution();
+            } catch (error) {
+                alert('触发进化失败');
+            }
+        }
+
+        // Update Cleaner
+        async function updateCleaner() {
+            const container = document.getElementById('cleanerPanel');
+            try {
+                const data = await fetchAPI('/api/cleaner/report');
+                
+                const usage = data.usage_pct || data.usage || 0;
+                const usageClass = usage < 50 ? 'low' : usage < 80 ? 'medium' : 'high';
+
+                container.innerHTML = `
+                    <div class="storage-section">
+                        <div class="storage-header">
+                            <span>存储使用率</span>
+                            <span>${formatNumber(usage, 1)}%</span>
+                        </div>
+                        <div class="storage-bar">
+                            <div class="storage-fill ${usageClass}" style="width: ${usage}%"></div>
+                        </div>
+                        <div style="display: flex; justify-content: space-between; font-size: 12px; color: var(--text-muted); margin-top: 5px;">
+                            <span>已用: ${formatNumber(data.used_mb || 0, 1)} MB</span>
+                            <span>总计: ${formatNumber(data.total_mb || 1000, 1)} MB</span>
+                        </div>
+                    </div>
+                    <div class="cleaner-actions">
+                        <button class="btn btn-secondary" onclick="runCleaner(true)">
+                            🔍 预览清理
+                        </button>
+                        <button class="btn" onclick="runCleaner(false)">
+                            🧹 执行清理
+                        </button>
+                    </div>
+                    <div class="data-types-grid">
+                        ${(data.data_types || data.types || []).slice(0, 12).map(t => `
+                            <div class="data-type-item">
+                                <div class="data-type-name">${t.name || t.type}</div>
+                                <div class="data-type-count">${formatNumber(t.count || 0, 0)}</div>
+                            </div>
+                        `).join('')}
+                    </div>
+                `;
+            } catch (error) {
+                container.innerHTML = `<div class="error-state">清理面板数据加载失败</div>`;
+            }
+        }
+
+        // Run Cleaner
+        async function runCleaner(dryRun) {
+            try {
+                await fetch(`${API_BASE}/api/cleaner/run`, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ dry_run: dryRun })
+                });
+                updateCleaner();
+            } catch (error) {
+                alert(dryRun ? '预览清理失败' : '执行清理失败');
+            }
+        }
+
+        // Refresh All
+        async function refreshAll() {
+            const btn = document.getElementById('refreshBtn');
+            btn.disabled = true;
+            btn.innerHTML = '<span class="spinner" style="width: 16px; height: 16px;"></span><span>刷新中...</span>';
+
+            await Promise.all([
+                updateStatus(),
+                updateBTCPrice(),
+                updateTechAnalysis(),
+                updateMultiDim(),
+                updateSignal(),
+                updateAttribution(),
+                updateValidation(),
+                updateKnowledge(),
+                updateDerivatives(),
+                updateEvolution(),
+                updateCleaner()
+            ]);
+
+            updateTime();
+            btn.disabled = false;
+            btn.innerHTML = '<span>🔄</span><span>刷新</span>';
+        }
+
+        // Initialize
+        document.addEventListener('DOMContentLoaded', () => {
+            refreshAll();
+            refreshInterval = setInterval(refreshAll, 60000);
+        });
+    </script>
+
+<script>
+// ========== 可视化增强JS ==========
+
+// --- 全局状态 ---
+let currentKlineSymbol = 'BTCUSDT';
+let currentKlineInterval = '1h';
+let currentDerivTab = 'funding';
+let currentOnchainTab = 'eth';
+let klineChart = null;
+let candlestickSeries = null;
+let fundingChart = null;
+let oiChart = null;
+let wsConnection = null;
+
+// --- 面板切换 ---
+function togglePanel(name) {
+    // 关闭所有面板
+    const panels = ['kline','deriv','news','onchain','paper'];
+    panels.forEach(p => {
+        const el = document.getElementById(p + 'Panel');
+        const btn = document.getElementById('btn' + p.charAt(0).toUpperCase() + p.slice(1));
+        if (el) el.style.display = 'none';
+        if (btn) btn.classList.remove('active');
+    });
+    // 打开指定面板
+    const target = document.getElementById(name + 'Panel');
+    const targetBtn = document.getElementById('btn' + name.charAt(0).toUpperCase() + name.slice(1));
+    if (target) target.style.display = 'block';
+    if (targetBtn) targetBtn.classList.add('active');
+    // 初始化图表
+    if (name === 'kline') initKlineChart();
+    if (name === 'deriv') initDerivCharts();
+    if (name === 'news') loadNews();
+    if (name === 'onchain') loadOnchainData();
+    if (name === 'paper') loadPaperTrading();
+}
+
+// --- K线图 (Lightweight Charts) ---
+async function initKlineChart() {
+    if (klineChart) return;
+    const container = document.getElementById('klineChart');
+    if (!container) return;
+    
+    klineChart = LightweightCharts.createChart(container, {
+        width: container.clientWidth,
+        height: 280,
+        layout: { backgroundColor: '#161B22', textColor: '#8B949E' },
+        grid: { vertLines: { color: '#30363D' }, horzLines: { color: '#30363D' } },
+        crosshair: { mode: LightweightCharts.CrosshairMode.Normal },
+        timeScale: { borderColor: '#30363D', timeVisible: true },
+        rightPriceScale: { borderColor: '#30363D' },
+    });
+    
+    candlestickSeries = klineChart.addCandlestickSeries({
+        upColor: '#3FB950', downColor: '#F85149',
+        borderUpColor: '#3FB950', borderDownColor: '#F85149',
+        wickUpColor: '#3FB950', wickDownColor: '#F85149',
+    });
+    
+    // 添加成交量柱
+    const volSeries = klineChart.addHistogramSeries({
+        color: '#58A6FF', priceFormat: { type: 'volume' },
+        priceScaleId: '',
+    });
+    volSeries.priceScale().applyOptions({ scaleMargins: { top: 0.8, bottom: 0 } });
+    
+    await loadKlineData();
+    
+    // 自适应宽度
+    window.addEventListener('resize', () => {
+        if (klineChart) klineChart.applyOptions({ width: container.clientWidth });
+    });
+}
+
+async function loadKlineData() {
+    try {
+        const resp = await fetch(`${API_BASE}/api/klines?symbol=${currentKlineSymbol}&interval=${currentKlineInterval}&limit=200`);
+        const data = await resp.json();
+        if (data.klines && candlestickSeries) {
+            candlestickSeries.setData(data.klines);
+            klineChart.timeScale().fitContent();
+        }
+    } catch(e) { console.error('K线加载失败:', e); }
+}
+
+function switchKlineInterval(interval, btn) {
+    currentKlineInterval = interval;
+    document.querySelectorAll('#klinePanel .tab-btn').forEach(b => b.classList.remove('active'));
+    btn.classList.add('active');
+    if (candlestickSeries) candlestickSeries.setData([]);
+    loadKlineData();
+}
+
+// --- 衍生品图表 (Chart.js) ---
+async function initDerivCharts() {
+    await loadFundingChart();
+    await loadLiquidationData();
+}
+
+async function loadFundingChart() {
+    const canvas = document.getElementById('fundingCanvas');
+    if (!canvas) return;
+    if (fundingChart) { fundingChart.destroy(); fundingChart = null; }
+    
+    try {
+        const resp = await fetch(`${API_BASE}/api/funding/history?symbol=${currentKlineSymbol.replace('USDT','')}&limit=30`);
+        const data = await resp.json();
+        const labels = (data.history || []).map(d => d.time || d.date || '');
+        const values = (data.history || []).map(d => d.rate || d.funding_rate || 0);
+        
+        fundingChart = new Chart(canvas, {
+            type: 'line',
+            data: {
+                labels: labels,
+                datasets: [{
+                    label: '资金费率 %',
+                    data: values,
+                    borderColor: values.some(v => v > 0.01) ? '#F85149' : values.some(v => v < -0.01) ? '#3FB950' : '#D29922',
+                    backgroundColor: 'rgba(88,166,255,0.1)',
+                    fill: true, tension: 0.4,
+                }]
+            },
+            options: {
+                responsive: true, maintainAspectRatio: false,
+                plugins: { legend: { display: false } },
+                scales: {
+                    x: { grid: { color: '#30363D' }, ticks: { color: '#8B949E', maxTicksLimit: 6 } },
+                    y: { grid: { color: '#30363D' }, ticks: { color: '#8B949E' } }
+                }
+            }
+        });
+    } catch(e) { console.error('资金费率图表加载失败:', e); }
+}
+
+async function loadLiquidationData() {
+    try {
+        const resp = await fetch(`${API_BASE}/api/derivatives/summary?symbol=${currentKlineSymbol.replace('USDT','')}`);
+        const data = await resp.json();
+        const el = document.getElementById('liqData');
+        if (el) {
+            document.getElementById('longLiq').textContent = formatNumber(data.long_liquidation || 0);
+            document.getElementById('shortLiq').textContent = formatNumber(data.short_liquidation || 0);
+            document.getElementById('longShortRatio').textContent = (data.long_short_ratio || '--') + ':1';
+        }
+    } catch(e) { console.error('爆仓数据加载失败:', e); }
+}
+
+function switchDerivTab(tab, btn) {
+    currentDerivTab = tab;
+    document.querySelectorAll('#derivativesPanel .tab-btn').forEach(b => b.classList.remove('active'));
+    btn.classList.add('active');
+    
+    document.getElementById('fundingChart').style.display = tab === 'funding' ? 'block' : 'none';
+    document.getElementById('oiChart').style.display = tab === 'oi' ? 'block' : 'none';
+    document.getElementById('liqData').style.display = tab === 'liq' ? 'block' : 'none';
+    
+    if (tab === 'oi') loadOIChart();
+}
+
+async function loadOIChart() {
+    const canvas = document.getElementById('oiCanvas');
+    if (!canvas) return;
+    if (oiChart) { oiChart.destroy(); oiChart = null; }
+    
+    try {
+        const resp = await fetch(`${API_BASE}/api/oi/history?symbol=${currentKlineSymbol.replace('USDT','')}&limit=30`);
+        const data = await resp.json();
+        const labels = (data.history || []).map(d => d.time || d.date || '');
+        const values = (data.history || []).map(d => d.open_interest || d.oi || 0);
+        
+        oiChart = new Chart(canvas, {
+            type: 'line',
+            data: {
+                labels: labels,
+                datasets: [{
+                    label: '持仓量 USDT',
+                    data: values,
+                    borderColor: '#BC8CFF',
+                    backgroundColor: 'rgba(188,140,255,0.1)',
+                    fill: true, tension: 0.4,
+                }]
+            },
+            options: {
+                responsive: true, maintainAspectRatio: false,
+                plugins: { legend: { display: false } },
+                scales: {
+                    x: { grid: { color: '#30363D' }, ticks: { color: '#8B949E', maxTicksLimit: 6 } },
+                    y: { grid: { color: '#30363D' }, ticks: { color: '#8B949E' } }
+                }
+            }
+        });
+    } catch(e) { console.error('OI图表加载失败:', e); }
+}
+
+// --- 新闻面板 ---
+async function loadNews() {
+    const container = document.getElementById('newsList');
+    if (!container) return;
+    
+    try {
+        const resp = await fetch(`${API_BASE}/api/news?max_items=20`);
+        const data = await resp.json();
+        const news = data.news || data.items || [];
+        
+        if (news.length === 0) {
+            container.innerHTML = '<div style="color:var(--text-muted);font-size:12px;text-align:center;padding:20px;">暂无新闻数据</div>';
+            return;
+        }
+        
+        container.innerHTML = news.slice(0, 20).map(item => {
+            const sentiment = item.sentiment || item.sentiment_score || 0;
+            const sentimentClass = sentiment > 0.2 ? 'signal-buy' : sentiment < -0.2 ? 'signal-sell' : 'signal-neutral';
+            const sentimentText = sentiment > 0.2 ? '看多' : sentiment < -0.2 ? '看空' : '中性';
+            return `
+                <div class="news-item-viz">
+                    <div class="news-title-viz">${item.title || item.content || item.text || '无标题'}</div>
+                    <div class="news-meta-viz">
+                        <span class="signal-badge ${sentimentClass}">${sentimentText} ${(sentiment * 100).toFixed(0)}%</span>
+                        <span>${item.source || ''} ${item.time || item.published_at || ''}</span>
+                    </div>
+                </div>
+            `;
+        }).join('');
+    } catch(e) {
+        container.innerHTML = '<div style="color:var(--red);font-size:12px;text-align:center;padding:20px;">新闻加载失败</div>';
+        console.error('新闻加载失败:', e);
+    }
+}
+
+// --- 链上数据面板 ---
+async function loadOnchainData() {
+    try {
+        const endpoint = currentOnchainTab === 'eth' ? '/api/onchain/ethereum' : '/api/onchain/bitcoin';
+        const resp = await fetch(`${API_BASE}${endpoint}`);
+        const data = await resp.json();
+        const d = data.data || data;
+        
+        document.getElementById('gasPrice').textContent = d.gas_price || d.gasPrice || d.mean_gas_price || '--';
+        document.getElementById('activeAddrs').textContent = formatNumber(d.active_addresses || d.activeAddresses || 0);
+        document.getElementById('largeTx').textContent = formatNumber(d.large_transfers || d.largeTransfers || 0);
+        document.getElementById('mvrv').textContent = d.mvrv || d.MVRV || '--';
+        document.getElementById('minerRev').textContent = d.miner_revenue || d.minerRevenue || '--';
+    } catch(e) {
+        console.error('链上数据加载失败:', e);
+    }
+}
+
+function switchOnchainTab(tab, btn) {
+    currentOnchainTab = tab;
+    document.querySelectorAll('#onchainPanel .tab-btn').forEach(b => b.classList.remove('active'));
+    btn.classList.add('active');
+    loadOnchainData();
+}
+
+// --- Paper Trading 面板 ---
+async function loadPaperTrading() {
+    try {
+        const resp = await fetch(`${API_BASE}/api/trading/account`);
+        const data = await resp.json();
+        const acct = data.account || data;
+        
+        const balance = acct.balance || 0;
+        const pnl = acct.total_pnl || acct.pnl || 0;
+        const pnlColor = pnl >= 0 ? 'var(--green)' : 'var(--red)';
+        
+        document.getElementById('ptBalance').textContent = `$${formatNumber(balance)}`;
+        document.getElementById('ptPnL').textContent = `${pnl >= 0 ? '+' : ''}$${formatNumber(pnl)}`;
+        document.getElementById('ptPnL').style.color = pnlColor;
+        document.getElementById('ptWinRate').textContent = (acct.win_rate || acct.winRate || 0) + '%';
+        document.getElementById('ptOpenPos').textContent = acct.open_positions || 0;
+        
+        // 加载持仓
+        const posResp = await fetch(`${API_BASE}/api/trading/positions`);
+        const posData = await posResp.json();
+        const positions = posData.positions || posData.data || [];
+        
+        const posHtml = positions.map(p => {
+            const pnlPos = p.pnl || 0;
+            const cls = pnlPos >= 0 ? 'signal-buy' : 'signal-sell';
+            return `<div class="metric-row-viz">
+                <span class="metric-label-viz">${p.symbol || 'BTC'}</span>
+                <span class="signal-badge ${cls}">${p.side || 'LONG'} ${p.quantity || 0}</span>
+                <span style="color:${pnlPos>=0?'var(--green)':'var(--red)'}">${pnlPos>=0?'+':''}${pnlPos.toFixed(2)}</span>
+            </div>`;
+        }).join('');
+        
+        const posEl = document.getElementById('ptPositions');
+        if (posEl) posEl.innerHTML = posHtml || '<div style="color:var(--text-muted);font-size:12px;">暂无持仓</div>';
+    } catch(e) {
+        console.error('Paper Trading数据加载失败:', e);
+    }
+}
+
+// --- 实时推送 (SSE) ---
+function initRealtimePush() {
+    const statusEl = document.getElementById('wsStatus');
+    
+    // 优先尝试SSE
+    try {
+        const evtSource = new EventSource(`${API_BASE}/api/sse/stream`);
+        evtSource.onopen = () => {
+            if (statusEl) statusEl.textContent = '⚡ 实时推送: 已连接';
+        };
+        evtSource.onmessage = (event) => {
+            try {
+                const data = JSON.parse(event.data);
+                handleRealtimeUpdate(data);
+            } catch(e) {}
+        };
+        evtSource.onerror = () => {
+            evtSource.close();
+            // 降级到轮询
+            if (statusEl) statusEl.textContent = '⚡ 实时推送: 轮询模式';
+            startPolling();
+        };
+    } catch(e) {
+        if (statusEl) statusEl.textContent = '⚡ 实时推送: 轮询模式';
+        startPolling();
+    }
+}
+
+function startPolling() {
+    // 每10秒刷新一次核心数据
+    setInterval(async () => {
+        try {
+            const resp = await fetch(`${API_BASE}/api/all`);
+            const data = await resp.json();
+            handleRealtimeUpdate(data);
+        } catch(e) {}
+    }, 10000);
+}
+
+function handleRealtimeUpdate(data) {
+    // 更新K线
+    if (data.price && candlestickSeries) {
+        candlestickSeries.update({
+            time: Math.floor(Date.now() / 1000),
+            open: data.price * 0.999,
+            high: data.price * 1.001,
+            low: data.price * 0.999,
+            close: data.price,
+        });
+    }
+    
+    // 更新BTC价格
+    if (data.btc_price) {
+        const el = document.getElementById('btcPrice');
+        if (el) el.textContent = '$' + formatNumber(data.btc_price);
+    }
+}
+
+// --- 辅助函数 ---
+function formatNumber(num) {
+    if (num === null || num === undefined) return '--';
+    num = parseFloat(num);
+    if (num >= 1e9) return (num / 1e9).toFixed(2) + 'B';
+    if (num >= 1e6) return (num / 1e6).toFixed(2) + 'M';
+    if (num >= 1e3) return (num / 1e3).toFixed(2) + 'K';
+    return num.toFixed(2);
+}
+
+// --- 启动 ---
+document.addEventListener('DOMContentLoaded', () => {
+    initRealtimePush();
+    // 默认打开K线图
+    setTimeout(() => togglePanel('kline'), 1000);
+});
+</script>
+
+</body>
+</html>
