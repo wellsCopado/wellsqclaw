@@ -22,7 +22,9 @@ android.permissions = INTERNET, ACCESS_NETWORK_STATE, READ_EXTERNAL_STORAGE, WRI
 android.archs = arm64-v8a, armeabi-v7a
 android.minapi = 24
 android.api = 34
+android.sdk_version = 34
 android.accept_sdk_license = True
+android.ndk_version = 25b
 
 # 启动画面
 android.manifest.applicationAttributes = android:icon="@mipmap/icon"
@@ -43,12 +45,6 @@ requirements = python3, kivy, loguru
 # P4A (Python for Android) 构建配置
 p4a.branch = master
 
-# Android NDK 版本
-android.ndk_version = 25b
-
-# Android SDK 版本
-android.sdk_version = 33
-
 # Buildozer log 级别
 log_level = 2
 
@@ -56,9 +52,6 @@ log_level = 2
 verbosity = 2
 
 # ==================== 高级配置 ====================
-
-# 忽略某些模块以减小 APK 大小
-# android.whitelist = lib-dynload/_ctypes.so,lib-dynload/_struct.so,lib-dynload/math.so,lib-dynload/select.so
 
 # 服务 (后台运行)
 # android.services = MainService
