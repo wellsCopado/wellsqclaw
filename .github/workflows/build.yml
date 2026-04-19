@@ -3,6 +3,9 @@ name: Build Android APK
 on:
   push:
     branches: [ main, master ]
+    paths-ignore:
+      - '**.md'
+      - 'docs/**'
   pull_request:
     branches: [ main, master ]
   workflow_dispatch:
@@ -10,6 +13,7 @@ on:
 jobs:
   build:
     runs-on: ubuntu-latest
+    timeout-minutes: 120
     
     steps:
       - name: Checkout code
@@ -23,7 +27,7 @@ jobs:
       - name: Install system dependencies
         run: |
           sudo apt-get update
-          sudo apt-get install -y \
+          sudo apt-get install -y --no-install-recommends \
             python3-dev \
             ffmpeg \
             libsdl2-dev \
@@ -43,11 +47,13 @@ jobs:
             autoconf \
             automake \
             libtool \
-            pkg-config
+            pkg-config \
+            patchelf
 
       - name: Install Python dependencies
         run: |
-          pip install --upgrade pip
+          pip install --upgrade pip setuptools wheel
+          pip install cython==0.29.37
           pip install buildozer
           pip install python-for-android
 
@@ -56,7 +62,6 @@ jobs:
           mkdir -p $HOME/.buildozer/android/platform
           cd $HOME/.buildozer/android/platform
           
-          # Download Android SDK
           if [ ! -d "android-sdk" ]; then
             wget -q https://dl.google.com/android/repository/commandlinetools-linux-11076708_latest.zip -O cmdline-tools.zip
             unzip -q cmdline-tools.zip
@@ -65,14 +70,12 @@ jobs:
             rm cmdline-tools.zip
           fi
           
-          # Download NDK
           if [ ! -d "android-ndk-r25b" ]; then
             wget -q https://dl.google.com/android/repository/android-ndk-r25b-linux.zip -O ndk.zip
             unzip -q ndk.zip
             rm ndk.zip
           fi
           
-          # Accept licenses and install SDK components
           yes | $HOME/.buildozer/android/platform/android-sdk/cmdline-tools/latest/bin/sdkmanager --licenses || true
           yes | $HOME/.buildozer/android/platform/android-sdk/cmdline-tools/latest/bin/sdkmanager "platforms;android-34" "build-tools;34.0.0" || true
 
@@ -82,31 +85,41 @@ jobs:
           echo "ANDROIDNDK=$HOME/.buildozer/android/platform/android-ndk-r25b" >> $GITHUB_ENV
           echo "ANDROIDAPI=34" >> $GITHUB_ENV
           echo "ANDROIDMINAPI=24" >> $GITHUB_ENV
+          echo "PATH=$HOME/.buildozer/android/platform/android-sdk/cmdline-tools/latest/bin:$PATH" >> $GITHUB_ENV
 
       - name: Build debug APK
         run: |
-          buildozer android debug --verbose 2>&1 | tee build.log
+          buildozer android debug --verbose 2>&1 | tee build.log || {
+            echo "=== BUILD FAILED ==="
+            tail -100 build.log
+            exit 1
+          }
 
       - name: Upload APK
         uses: actions/upload-artifact@v4
-        if: success()
+        if: always()
         with:
           name: cryptomindpro-debug.apk
           path: bin/*.apk
           retention-days: 7
+          if-no-files-found: warn
 
       - name: Upload build log
         uses: actions/upload-artifact@v4
-        if: failure()
+        if: always()
         with:
           name: build-log
           path: build.log
           retention-days: 7
 
       - name: List build outputs
+        if: always()
         run: |
-          echo "=== Build outputs ==="
+          echo "=== bin/ ==="
           ls -la bin/ 2>/dev/null || echo "No bin directory"
           echo ""
           echo "=== APK files ==="
-          find . -name "*.apk" 2>/dev/null
+          find . -name "*.apk" 2>/dev/null || echo "No APK found"
+          echo ""
+          echo "=== Build log tail ==="
+          tail -50 build.log 2>/dev/null || echo "No build.log"
