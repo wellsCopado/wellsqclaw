@@ -3,11 +3,6 @@ name: Build Android APK
 on:
   push:
     branches: [ main, master ]
-    paths-ignore:
-      - '**.md'
-      - 'docs/**'
-  pull_request:
-    branches: [ main, master ]
   workflow_dispatch:
 
 jobs:
@@ -28,49 +23,49 @@ jobs:
         run: |
           sudo apt-get update
           sudo apt-get install -y --no-install-recommends \
-            python3-dev \
-            ffmpeg \
-            libsdl2-dev \
-            libsdl2-image-dev \
-            libsdl2-mixer-dev \
-            libsdl2-ttf-dev \
-            libportmidi-dev \
-            libswscale-dev \
-            libavformat-dev \
-            libavcodec-dev \
-            zlib1g-dev \
-            libssl-dev \
-            libffi-dev \
-            liblzma-dev \
-            make \
-            git \
-            autoconf \
-            automake \
-            libtool \
-            pkg-config \
-            patchelf \
-            openjdk-17-jdk
+            python3-dev ffmpeg libsdl2-dev libsdl2-image-dev \
+            libsdl2-mixer-dev libsdl2-ttf-dev libportmidi-dev \
+            libswscale-dev libavformat-dev libavcodec-dev \
+            zlib1g-dev libssl-dev libffi-dev liblzma-dev \
+            make git autoconf automake libtool pkg-config \
+            patchelf openjdk-17-jdk
 
       - name: Install Python dependencies
         run: |
           pip install --upgrade pip setuptools wheel
           pip install cython==0.29.37
-          pip install buildozer
-          pip install python-for-android
+          pip install buildozer python-for-android
 
-      - name: Set up Android SDK
+      - name: Set up Android SDK with buildozer-compatible layout
         run: |
           mkdir -p $HOME/.buildozer/android/platform
           cd $HOME/.buildozer/android/platform
           
           # Download Android SDK command line tools
-          if [ ! -d "android-sdk" ]; then
-            wget -q https://dl.google.com/android/repository/commandlinetools-linux-11076708_latest.zip -O cmdline-tools.zip
-            unzip -q cmdline-tools.zip
-            mkdir -p android-sdk/cmdline-tools/latest
-            mv cmdline-tools/* android-sdk/cmdline-tools/latest/ 2>/dev/null || true
-            rm -rf cmdline-tools cmdline-tools.zip
-          fi
+          wget -q https://dl.google.com/android/repository/commandlinetools-linux-11076708_latest.zip -O cmdline-tools.zip
+          unzip -q cmdline-tools.zip
+          
+          # Create BOTH layouts: new cmdline-tools AND old tools/bin symlinks
+          # buildozer hardcodes tools/bin/sdkmanager path
+          SDK_DIR=$HOME/.buildozer/android/platform/android-sdk
+          mkdir -p $SDK_DIR/cmdline-tools/latest
+          mkdir -p $SDK_DIR/tools/bin
+          
+          # Install to new layout
+          cp -r cmdline-tools/* $SDK_DIR/cmdline-tools/latest/ 2>/dev/null || true
+          
+          # Create symlinks for old layout (what buildozer expects)
+          ln -sf $SDK_DIR/cmdline-tools/latest/bin/sdkmanager $SDK_DIR/tools/bin/sdkmanager
+          ln -sf $SDK_DIR/cmdline-tools/latest/bin/avdmanager $SDK_DIR/tools/bin/avdmanager
+          
+          # Verify
+          echo "=== sdkmanager at old path ==="
+          ls -la $SDK_DIR/tools/bin/sdkmanager
+          $SDK_DIR/tools/bin/sdkmanager --version
+          
+          # Accept licenses and install components
+          yes | $SDK_DIR/tools/bin/sdkmanager --licenses || true
+          yes | $SDK_DIR/tools/bin/sdkmanager "platforms;android-34" "build-tools;34.0.0" "platform-tools" || true
           
           # Download NDK
           if [ ! -d "android-ndk-r25b" ]; then
@@ -79,26 +74,12 @@ jobs:
             rm ndk.zip
           fi
           
-          # Accept licenses and install SDK components
-          export ANDROID_SDK_ROOT=$HOME/.buildozer/android/platform/android-sdk
-          yes | $ANDROID_SDK_ROOT/cmdline-tools/latest/bin/sdkmanager --licenses || true
-          yes | $ANDROID_SDK_ROOT/cmdline-tools/latest/bin/sdkmanager "platforms;android-34" "build-tools;34.0.0" "platform-tools" || true
-
-      - name: Set environment variables
-        run: |
-          echo "ANDROIDSDK=$HOME/.buildozer/android/platform/android-sdk" >> $GITHUB_ENV
-          echo "ANDROIDNDK=$HOME/.buildozer/android/platform/android-ndk-r25b" >> $GITHUB_ENV
-          echo "ANDROIDAPI=34" >> $GITHUB_ENV
-          echo "ANDROIDMINAPI=24" >> $GITHUB_ENV
-          echo "PATH=$HOME/.buildozer/android/platform/android-sdk/cmdline-tools/latest/bin:$HOME/.buildozer/android/platform/android-sdk/platform-tools:$PATH" >> $GITHUB_ENV
+          rm -rf cmdline-tools cmdline-tools.zip
 
       - name: Build debug APK
         run: |
-          buildozer android debug --verbose 2>&1 | tee build.log || {
-            echo "=== BUILD FAILED ==="
-            tail -100 build.log
-            exit 1
-          }
+          set -o pipefail
+          buildozer android debug --verbose 2>&1 | tee build.log
 
       - name: Upload APK
         uses: actions/upload-artifact@v4
@@ -117,14 +98,12 @@ jobs:
           path: build.log
           retention-days: 7
 
-      - name: List build outputs
+      - name: Debug output
         if: always()
         run: |
-          echo "=== bin/ ==="
-          ls -la bin/ 2>/dev/null || echo "No bin directory"
-          echo ""
           echo "=== APK files ==="
           find . -name "*.apk" 2>/dev/null || echo "No APK found"
-          echo ""
-          echo "=== Build log tail ==="
-          tail -50 build.log 2>/dev/null || echo "No build.log"
+          echo "=== bin/ contents ==="
+          ls -la bin/ 2>/dev/null || echo "No bin dir"
+          echo "=== build.log tail ==="
+          tail -80 build.log 2>/dev/null || echo "No build.log"
