@@ -7,7 +7,7 @@ on:
 
 jobs:
   build:
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-22.04  # 降级到22.04更稳定
     timeout-minutes: 120
     
     steps:
@@ -28,7 +28,7 @@ jobs:
             libswscale-dev libavformat-dev libavcodec-dev \
             zlib1g-dev libssl-dev libffi-dev liblzma-dev \
             make git autoconf automake libtool pkg-config \
-            patchelf openjdk-17-jdk
+            patchelf openjdk-17-jdk libtool-bin  # 添加libtool-bin
 
       - name: Install Python dependencies
         run: |
@@ -36,34 +36,23 @@ jobs:
           pip install cython==0.29.37
           pip install buildozer python-for-android
 
-      - name: Set up Android SDK with buildozer-compatible layout
+      - name: Set up Android SDK
         run: |
           mkdir -p $HOME/.buildozer/android/platform
           cd $HOME/.buildozer/android/platform
           
-          # Download Android SDK command line tools
+          # Download Android SDK
           wget -q https://dl.google.com/android/repository/commandlinetools-linux-11076708_latest.zip -O cmdline-tools.zip
           unzip -q cmdline-tools.zip
           
-          # Create BOTH layouts: new cmdline-tools AND old tools/bin symlinks
-          # buildozer hardcodes tools/bin/sdkmanager path
           SDK_DIR=$HOME/.buildozer/android/platform/android-sdk
           mkdir -p $SDK_DIR/cmdline-tools/latest
           mkdir -p $SDK_DIR/tools/bin
           
-          # Install to new layout
           cp -r cmdline-tools/* $SDK_DIR/cmdline-tools/latest/ 2>/dev/null || true
-          
-          # Create symlinks for old layout (what buildozer expects)
           ln -sf $SDK_DIR/cmdline-tools/latest/bin/sdkmanager $SDK_DIR/tools/bin/sdkmanager
           ln -sf $SDK_DIR/cmdline-tools/latest/bin/avdmanager $SDK_DIR/tools/bin/avdmanager
           
-          # Verify
-          echo "=== sdkmanager at old path ==="
-          ls -la $SDK_DIR/tools/bin/sdkmanager
-          $SDK_DIR/tools/bin/sdkmanager --version
-          
-          # Accept licenses and install components
           yes | $SDK_DIR/tools/bin/sdkmanager --licenses || true
           yes | $SDK_DIR/tools/bin/sdkmanager "platforms;android-34" "build-tools;34.0.0" "platform-tools" || true
           
@@ -106,4 +95,4 @@ jobs:
           echo "=== bin/ contents ==="
           ls -la bin/ 2>/dev/null || echo "No bin dir"
           echo "=== build.log tail ==="
-          tail -80 build.log 2>/dev/null || echo "No build.log"
+          tail -100 build.log 2>/dev/null || echo "No build.log"
