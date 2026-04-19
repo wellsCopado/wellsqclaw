@@ -48,7 +48,8 @@ jobs:
             automake \
             libtool \
             pkg-config \
-            patchelf
+            patchelf \
+            openjdk-17-jdk
 
       - name: Install Python dependencies
         run: |
@@ -62,22 +63,26 @@ jobs:
           mkdir -p $HOME/.buildozer/android/platform
           cd $HOME/.buildozer/android/platform
           
+          # Download Android SDK command line tools
           if [ ! -d "android-sdk" ]; then
             wget -q https://dl.google.com/android/repository/commandlinetools-linux-11076708_latest.zip -O cmdline-tools.zip
             unzip -q cmdline-tools.zip
-            mkdir -p android-sdk/cmdline-tools
-            mv cmdline-tools android-sdk/cmdline-tools/latest
-            rm cmdline-tools.zip
+            mkdir -p android-sdk/cmdline-tools/latest
+            mv cmdline-tools/* android-sdk/cmdline-tools/latest/ 2>/dev/null || true
+            rm -rf cmdline-tools cmdline-tools.zip
           fi
           
+          # Download NDK
           if [ ! -d "android-ndk-r25b" ]; then
             wget -q https://dl.google.com/android/repository/android-ndk-r25b-linux.zip -O ndk.zip
             unzip -q ndk.zip
             rm ndk.zip
           fi
           
-          yes | $HOME/.buildozer/android/platform/android-sdk/cmdline-tools/latest/bin/sdkmanager --licenses || true
-          yes | $HOME/.buildozer/android/platform/android-sdk/cmdline-tools/latest/bin/sdkmanager "platforms;android-34" "build-tools;34.0.0" || true
+          # Accept licenses and install SDK components
+          export ANDROID_SDK_ROOT=$HOME/.buildozer/android/platform/android-sdk
+          yes | $ANDROID_SDK_ROOT/cmdline-tools/latest/bin/sdkmanager --licenses || true
+          yes | $ANDROID_SDK_ROOT/cmdline-tools/latest/bin/sdkmanager "platforms;android-34" "build-tools;34.0.0" "platform-tools" || true
 
       - name: Set environment variables
         run: |
@@ -85,7 +90,7 @@ jobs:
           echo "ANDROIDNDK=$HOME/.buildozer/android/platform/android-ndk-r25b" >> $GITHUB_ENV
           echo "ANDROIDAPI=34" >> $GITHUB_ENV
           echo "ANDROIDMINAPI=24" >> $GITHUB_ENV
-          echo "PATH=$HOME/.buildozer/android/platform/android-sdk/cmdline-tools/latest/bin:$PATH" >> $GITHUB_ENV
+          echo "PATH=$HOME/.buildozer/android/platform/android-sdk/cmdline-tools/latest/bin:$HOME/.buildozer/android/platform/android-sdk/platform-tools:$PATH" >> $GITHUB_ENV
 
       - name: Build debug APK
         run: |
