@@ -12,6 +12,11 @@ class AttributionScreen(Screen):
     def on_enter(self):
         self.load_analysis()
     
+
+    def go_back(self):
+        """返回上一页"""
+        if self.manager:
+            self.manager.current = self.manager.previous() or "home"
     def load_analysis(self):
         container = self.ids.get('attr_container')
         if not container:

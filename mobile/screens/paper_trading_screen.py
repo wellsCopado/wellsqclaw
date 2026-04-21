@@ -15,6 +15,11 @@ class PaperTradingScreen(Screen):
         self.load_account()
         self.load_positions()
     
+
+    def go_back(self):
+        """返回上一页"""
+        if self.manager:
+            self.manager.current = self.manager.previous() or "home"
     def load_account(self):
         container = self.ids.get('pt_container')
         if not container:

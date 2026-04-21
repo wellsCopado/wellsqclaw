@@ -12,6 +12,11 @@ class KnowledgeScreen(Screen):
     def on_enter(self):
         self.load_stats()
     
+
+    def go_back(self):
+        """返回上一页"""
+        if self.manager:
+            self.manager.current = self.manager.previous() or "home"
     def load_stats(self):
         container = self.ids.get('kb_container')
         if not container:
