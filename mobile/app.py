@@ -29,7 +29,9 @@ from kivymd.uix.label import MDLabel
 from kivymd.uix.card import MDCard
 from kivymd.uix.textfield import MDTextField
 from kivymd.uix.dialog import MDDialog
-from kivymd.uix.spinner import MDSpinner
+# MDSpinner removed: not available in KivyMD 1.2.0
+from kivy.uix.image import Image
+from kivymd.uix.progressindicator import MDProgressBar
 from kivymd.uix.snackbar import Snackbar
 from kivymd.icon_definitions import md_icons
 from kivy.uix.boxlayout import BoxLayout
@@ -72,12 +74,12 @@ class AnalysisScreen(MDScreen):
     def start_analysis(self):
         """开始AI分析"""
         self.ids.analysis_result.text = "🔄 AI分析中..."
-        self.ids.spinner.active = True
+        self.ids.spinner.value = 50
         # 模拟分析
         Clock.schedule_once(self.show_result, 3)
     
     def show_result(self, *args):
-        self.ids.spinner.active = False
+        self.ids.spinner.value = 100
         self.ids.analysis_result.text = (
             "📊 BTC/USDT 分析报告\n\n"
             "趋势判断: 中期看涨 (4h级别)\n"
@@ -312,8 +314,7 @@ class CryptoMindApp(MDApp):
         layout.add_widget(title)
         
         # 交易对选择
-        from kivymd.uix.spinner import MDDropDownItem
-        from kivymd.uix.menu import MDDropdownMenu
+                from kivymd.uix.menu import MDDropdownMenu
         
         symbol_btn = MDRaisedButton(
             text="BTCUSDT",
@@ -350,14 +351,15 @@ class CryptoMindApp(MDApp):
         layout.add_widget(result_card)
         
         # 加载指示器
-        spinner = MDSpinner(
+        # 加载指示器 - 用 MDProgressBar 替代 MDSpinner
+        progress = MDProgressBar(
             id="spinner",
             pos_hint={"center_x": 0.5, "center_y": 0.15},
-            size_hint=(None, None),
-            size=("48dp", "48dp"),
-            active=False
+            size_hint_x: 0.4,
+            value: 0,
+            running=False
         )
-        layout.add_widget(spinner)
+        layout.add_widget(progress)
         
         return layout
     
