@@ -9,6 +9,11 @@ import json
 
 
 class PaperTradingScreen(Screen):
+
+    def go_back(self):
+        """返回上一页"""
+        if self.manager:
+            self.manager.current = self.manager.previous() or "home"
     """Paper Trading 模拟账户屏幕"""
     
     def on_enter(self):

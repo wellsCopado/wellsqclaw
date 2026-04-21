@@ -8,6 +8,11 @@ import asyncio
 
 
 class OnchainScreen(Screen):
+
+    def go_back(self):
+        """返回上一页"""
+        if self.manager:
+            self.manager.current = self.manager.previous() or "home"
     """链上数据详情屏幕"""
     
     def on_enter(self):

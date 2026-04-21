@@ -17,10 +17,18 @@ from kivy.uix.spinner import Spinner
 from kivy.uix.card import Card
 from kivy.clock import Clock
 from kivy.properties import StringProperty, BooleanProperty
-from core.utils.logger import logger
+import logging
 
+# 简单 logger，避免依赖 core 模块
+logger = logging.getLogger('settings')
+logger.setLevel(logging.INFO)
+if not logger.handlers:
+    handler = logging.StreamHandler()
+    handler.setFormatter(logging.Formatter('%(levelname)s: %(message)s'))
+    logger.addHandler(handler)
 
-API_BASE = "http://127.0.0.1:8000"
+# Android 上没有本地后端，禁用 API 调用
+API_BASE = None
 
 
 class ConfigItem(BoxLayout):

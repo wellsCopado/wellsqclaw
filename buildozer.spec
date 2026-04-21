@@ -35,7 +35,7 @@ orientation = portrait
 # ==================== 依赖包 ====================
 
 # 核心依赖
-requirements = python3, kivy, loguru
+requirements = python3, kivy, kivymd, loguru, requests, aiohttp, websockets, pillow, numpy, multidict, yarl
 
 # 本地 AI - llama.cpp (CUDA/GPU 支持可选)
 # requirements = python3, kivy, loguru, llvmlite, llama-cpp-python
