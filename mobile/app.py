@@ -15,7 +15,6 @@ Config.set("graphics", "maxfps", 30)
 
 from kivymd.app import MDApp
 from kivymd.uix.screen import MDScreen
-from kivymd.uix.screenmanager import MDScreen
 from mobile.screens.news_screen import NewsScreen
 from mobile.screens.onchain_screen import OnchainScreen
 from mobile.screens.knowledge_screen import KnowledgeScreen
@@ -31,7 +30,7 @@ from kivymd.uix.textfield import MDTextField
 from kivymd.uix.dialog import MDDialog
 # MDSpinner removed: not available in KivyMD 1.2.0
 from kivy.uix.image import Image
-from kivymd.uix.progressindicator import MDProgressBar
+from kivymd.uix.progressbar import MDProgressBar
 from kivymd.uix.snackbar import Snackbar
 from kivymd.icon_definitions import md_icons
 from kivy.uix.boxlayout import BoxLayout
