@@ -16,12 +16,9 @@ jobs:
       - name: Checkout code
         uses: actions/checkout@v4
 
-      - name: Build APK inside Kivy Docker container
+      - name: Build APK
         run: |
-          # The kivy/buildozer image already has everything pre-installed:
-          # Android SDK, NDK, buildozer, python-for-android, cython, etc.
-          buildozer android debug 2>&1 | tee build.log
-          echo "Exit code: $?"
+          echo "y" | buildozer android debug 2>&1 | tee build.log
 
       - name: Upload APK
         uses: actions/upload-artifact@v4
@@ -45,5 +42,7 @@ jobs:
         run: |
           echo "=== APK files ==="
           find . -name "*.apk" 2>/dev/null || echo "No APK found"
+          echo "=== bin/ ==="
+          ls -la bin/ 2>/dev/null || echo "No bin/"
           echo "=== build.log tail ==="
           tail -50 build.log 2>/dev/null || echo "No build.log"
