@@ -15,7 +15,6 @@ Config.set("graphics", "maxfps", 30)
 
 from kivymd.app import MDApp
 from kivymd.uix.screen import MDScreen
-from kivymd.uix.screenmanager import MDScreen
 from mobile.screens.news_screen import NewsScreen
 from mobile.screens.onchain_screen import OnchainScreen
 from mobile.screens.knowledge_screen import KnowledgeScreen
@@ -29,7 +28,7 @@ from kivymd.uix.label import MDLabel
 from kivymd.uix.card import MDCard
 from kivymd.uix.textfield import MDTextField
 from kivymd.uix.dialog import MDDialog
-from kivymd.uix.spinner import MDSpinner
+from kivymd.uix.progressbar import MDProgressBar
 from kivymd.uix.snackbar import Snackbar
 from kivymd.icon_definitions import md_icons
 from kivy.uix.boxlayout import BoxLayout
@@ -71,13 +70,11 @@ class AnalysisScreen(MDScreen):
     
     def start_analysis(self):
         """开始AI分析"""
-        self.ids.analysis_result.text = "🔄 AI分析中..."
-        self.ids.spinner.active = True
+        self.ids.analysis_result.text = "🔄 AI分析中，请稍候..."
         # 模拟分析
-        Clock.schedule_once(self.show_result, 3)
+        Clock.schedule_once(self.show_result, 2)
     
     def show_result(self, *args):
-        self.ids.spinner.active = False
         self.ids.analysis_result.text = (
             "📊 BTC/USDT 分析报告\n\n"
             "趋势判断: 中期看涨 (4h级别)\n"
@@ -312,7 +309,6 @@ class CryptoMindApp(MDApp):
         layout.add_widget(title)
         
         # 交易对选择
-        from kivymd.uix.spinner import MDDropDownItem
         from kivymd.uix.menu import MDDropdownMenu
         
         symbol_btn = MDRaisedButton(
@@ -350,12 +346,12 @@ class CryptoMindApp(MDApp):
         layout.add_widget(result_card)
         
         # 加载指示器
-        spinner = MDSpinner(
+        spinner = MDProgressBar(
             id="spinner",
             pos_hint={"center_x": 0.5, "center_y": 0.15},
-            size_hint=(None, None),
-            size=("48dp", "48dp"),
-            active=False
+            size_hint=(0.6, None),
+            height="4dp",
+            type="indeterminate"
         )
         layout.add_widget(spinner)
         
