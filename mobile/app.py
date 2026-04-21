@@ -314,7 +314,7 @@ class CryptoMindApp(MDApp):
         layout.add_widget(title)
         
         # 交易对选择
-                from kivymd.uix.menu import MDDropdownMenu
+        from kivymd.uix.menu import MDDropdownMenu
         
         symbol_btn = MDRaisedButton(
             text="BTCUSDT",
@@ -350,14 +350,12 @@ class CryptoMindApp(MDApp):
         result_card.add_widget(scroll)
         layout.add_widget(result_card)
         
-        # 加载指示器
         # 加载指示器 - 用 MDProgressBar 替代 MDSpinner
         progress = MDProgressBar(
             id="spinner",
             pos_hint={"center_x": 0.5, "center_y": 0.15},
-            size_hint_x: 0.4,
-            value: 0,
-            running=False
+            size_hint_x=0.4,
+            value=0
         )
         layout.add_widget(progress)
         
