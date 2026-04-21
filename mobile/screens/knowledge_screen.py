@@ -7,6 +7,11 @@ import requests
 
 
 class KnowledgeScreen(Screen):
+
+    def go_back(self):
+        """返回上一页"""
+        if self.manager:
+            self.manager.current = self.manager.previous() or "home"
     """知识库管理屏幕"""
     
     def on_enter(self):
