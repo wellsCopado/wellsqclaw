@@ -350,14 +350,7 @@ class CryptoMindApp(MDApp):
         result_card.add_widget(scroll)
         layout.add_widget(result_card)
         
-        # 加载指示器
-        spinner = MDProgressBar(
-            id="spinner",
-            pos_hint={"center_x": 0.5, "center_y": 0.15},
-            size_hint=(0.6, None),
-            height="4dp",
-            type="indeterminate"
-        # 加载指示器 - 用 MDProgressBar 替代 MDSpinner
+        # 加载指示器 - MDProgressBar
         progress = MDProgressBar(
             id="spinner",
             pos_hint={"center_x": 0.5, "center_y": 0.15},
