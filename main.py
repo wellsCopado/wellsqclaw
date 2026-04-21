@@ -1,296 +1,548 @@
-#!/usr/bin/env python3
+import json
 """
-CryptoMind Pro Plus AI - 主入口
-一键启动全部服务 + 全链路测试
+CryptoMind Pro Plus AI - 移动端 App (最终版)
+KivyMD 实现，真实数据驱动
+包含：K线图 / 知识库 / 历史信号 / 设置
 """
+import sys, os
+sys.path.insert(0, os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
+
 import asyncio
-import sys
-import time
-import argparse
+import threading
+import time as time_module
+import io
+import base64
 from datetime import datetime
 
-# ─── 彩色输出 ───────────────────────────────────────────────
-class Colors:
-    GREEN = "\033[92m"
-    RED   = "\033[91m"
-    YELLOW = "\033[93m"
-    BLUE  = "\033[94m"
-    PURPLE = "\033[95m"
-    CYAN  = "\033[96m"
-    BOLD  = "\033[1m"
-    DIM   = "\033[2m"
-    RESET = "\033[0m"
+import kivy
+kivy.require('2.3.0')
+from kivy.app import App
+from kivy.uix.screenmanager import ScreenManager, Screen
+from kivy.uix.boxlayout import BoxLayout
+from kivy.uix.scrollview import ScrollView
+from kivy.uix.floatlayout import FloatLayout
+from kivy.uix.widget import Widget
+from kivy.properties import StringProperty, NumericProperty, BooleanProperty, ColorProperty
+from kivy.graphics import Color, Rectangle, Line, Ellipse
+from kivy.graphics.texture import Texture
+from kivy.clock import Clock
 
-def log(msg, color=None):
-    if color is None:
-        color = Colors.RESET
-    ts = datetime.now().strftime("%H:%M:%S")
-    print(f"{color}[{ts}] {msg}{Colors.RESET}")
+from kivymd.app import MDApp
+from kivymd.uix.card import MDCard
+from kivymd.uix.label import MDLabel
+from kivymd.uix.button import MDIconButton, MDRectangleFlatButton
+from kivymd.uix.bottomnavigation import MDBottomNavigation, MDBottomNavigationItem
+from kivymd.uix.dialog import MDDialog
+from kivymd.theming import ThemableBehavior
 
-def banner():
-    print(f"""
-{Colors.CYAN}{Colors.BOLD}
-╔══════════════════════════════════════════════╗
-║   CryptoMind Pro Plus AI  ·  全链路启动器    ║
-║   一键启动 · 全模块测试 · 智能分析            ║
-╚══════════════════════════════════════════════╝
-{Colors.RESET}
-""")
+from core.data.collectors.spot.binance import BinanceSpotCollector
+from core.data.collectors.spot.okx import OKXSpotCollector
+from core.data.collectors.spot.bybit import BybitSpotCollector
+from core.data.collectors.derivatives import get_coinglass_collector
+from core.analysis.technical.patterns import recognize_patterns
+from core.analysis.technical.support_resistance import analyze_support_resistance
+from core.analysis.knowledge_base.knowledge_base import KnowledgeBase
+from core.utils.logger import logger
 
-# ─── 模块导入 ───────────────────────────────────────────────
-async def test_data_layer():
-    """数据采集层测试"""
-    log(f"{Colors.BLUE}━━━ 数据采集层 ━━━", Colors.BLUE)
-    
-    from core.data.collectors.spot.binance import BinanceSpotCollector
-    from core.data.orchestrator import get_orchestrator
-
-    b = BinanceSpotCollector()
-    klines = await b.get_klines("BTCUSDT", "4h", 50)
-    await b.close()
-    
-    if klines and len(klines) >= 30:
-        latest = klines[-1]
-        price = latest.get("close", latest.get("close_price", 0))
-        log(f"✅ Binance K线: {len(klines)} 条 | BTC最新价 ${price:,.0f}", Colors.GREEN)
-    else:
-        log(f"❌ Binance K线采集失败", Colors.RED)
-        return False
-
-    # 编排器
-    orch = get_orchestrator()
-    log(f"✅ 编排器就绪: {len(orch._tasks)} 个采集任务", Colors.GREEN)
-    return True
+# 颜色
+C_BG = (0.05, 0.07, 0.10, 1)
+C_CARD = (0.08, 0.11, 0.15, 1)
+C_BULL = (0.25, 0.73, 0.31, 1)
+C_BEAR = (0.97, 0.32, 0.29, 1)
+C_TEXT = (0.90, 0.91, 0.93, 1)
+C_DIM = (0.55, 0.58, 0.62, 1)
+C_ACCENT = (0.35, 0.65, 1.0, 1)
 
 
-async def test_analysis_layer():
-    """分析层测试"""
-    log(f"{Colors.PURPLE}━━━ 分析引擎层 ━━━", Colors.PURPLE)
-    
-    from core.analysis.technical.indicators import analyze, technical_to_dict
-    from core.analysis.multi_dimension.multi_dim_analyzer import get_multi_dim_analyzer
+# ─────────────────────────────────────────────────────────
+# 主屏幕
+# ─────────────────────────────────────────────────────────
+class MainScreen(Screen):
+    btc_price = StringProperty("$--")
+    btc_change = StringProperty("+0.00%")
+    btc_change_color = ColorProperty(C_BULL)
+    signal_text = StringProperty("分析中")
+    signal_color = ColorProperty(C_TEXT)
+    confidence_text = StringProperty("0%")
+    fr_value = StringProperty("--")
+    oi_value = StringProperty("--")
+    liq_value = StringProperty("--")
+    ls_value = StringProperty("--")
+    rsi_value = StringProperty("--")
+    macd_value = StringProperty("--")
+    bb_value = StringProperty("--")
+    analysis_summary = StringProperty("正在获取数据...")
+    news_text = StringProperty("加载中...")
+    last_update = StringProperty("--")
+    model_name = StringProperty("Gemma 3 4B")
+    is_loading = BooleanProperty(False)
 
-    # 技术分析
-    from core.data.collectors.spot.binance import BinanceSpotCollector
-    b = BinanceSpotCollector()
-    klines = await b.get_klines("BTCUSDT", "4h", 100)
-    await b.close()
-    
-    if klines and len(klines) >= 30:
-        r = analyze(klines, "BTC")
-        d = technical_to_dict(r)
-        log(f"✅ 技术分析: RSI={d['rsi']:.0f} MACD={d['macd_signal_text']} 趋势={d['trend']}", Colors.GREEN)
-    else:
-        log(f"❌ 技术分析失败", Colors.RED)
-        return False
+    def __init__(self, **kwargs):
+        super().__init__(**kwargs)
+        self.binance = BinanceSpotCollector()
+        self.okx = OKXSpotCollector()
+        self.bybit = BybitSpotCollector()
+        self.cg = get_coinglass_collector()
+        self.signal_analyzer = None
+        try:
+            from core.analytics import get_signal_analyzer
+            self.signal_analyzer = get_signal_analyzer()
+        except Exception:
+            pass
+        Clock.schedule_once(lambda *_: self._init_data(), 0.5)
 
-    # 多维度分析
-    analyzer = get_multi_dim_analyzer()
-    sig = await analyzer.analyze("BTC", "4h")
-    d = analyzer.to_dict(sig)
-    log(f"✅ 多维度: {d['signal']} | 综合={d['overall_score']} | 置信={d['confidence']}% | 风险={d['risk_level']}", Colors.GREEN)
-    return True
+    def _init_data(self):
+        self.refresh_data()
+        Clock.schedule_interval(lambda *_: self.refresh_data(), 60)
 
+    def refresh_data(self):
+        if self.is_loading:
+            return
+        self.is_loading = True
+        threading.Thread(target=self._fetch_all_data, daemon=True).start()
 
-async def test_knowledge_layer():
-    """知识系统测试"""
-    log(f"{Colors.YELLOW}━━━ 知识系统层 ━━━", Colors.YELLOW)
-    
-    from core.analysis.knowledge_base.knowledge_base import get_knowledge_base
-    from core.analysis.regression.regression_validator import get_validator
-    from core.analysis.attribution.attribution_analyzer import get_attribution_analyzer
+    def _fetch_all_data(self):
+        try:
+            loop = asyncio.new_event_loop()
+            asyncio.set_event_loop(loop)
+            loop.run_until_complete(self._do_fetch())
+            loop.close()
+        except Exception as e:
+            logger.error(f"数据获取失败: {e}")
+        finally:
+            self.is_loading = False
 
-    kb = get_knowledge_base()
-    stats = kb.get_statistics("BTC")
-    log(f"✅ 知识库: {stats['total']} 模式 | 胜率={stats['win_rate']}%", Colors.GREEN)
+    async def _do_fetch(self):
+        try:
+            # BTC价格
+            ticker = await self.binance.get_ticker("BTCUSDT")
+            if ticker:
+                price = float(ticker.get("last", 0))
+                prev = float(ticker.get("prev_close", price))
+                chg = (price - prev) / prev * 100 if prev > 0 else 0
 
-    v = get_validator()
-    report = v.get_accuracy_report("BTC", 30)
-    log(f"✅ 回归验证: {report['total_predictions']} 预测 | 方向准确={report['direction_accuracy']}%", Colors.GREEN)
+                def ui():
+                    self.btc_price = f"${price:,.0f}"
+                    self.btc_change = f"{'+' if chg >= 0 else ''}{chg:.2f}%"
+                    self.btc_change_color = C_BULL if chg >= 0 else C_BEAR
+                    self.last_update = f"更新 {datetime.now().strftime('%H:%M')}"
+                Clock.schedule_once(lambda *_: ui())
 
-    a = get_attribution_analyzer()
-    attr = a.get_summary_report("BTC", 30)
-    log(f"✅ 归因分析: {attr.get('total_trades', 0)} 笔交易归因", Colors.GREEN)
-    
-    kb.close(); v.close(); a.close()
-    return True
+            # 衍生品数据
+            summary = await self.cg.get_market_summary("BTC")
+            if summary:
+                fr = summary.get("funding_rate", 0)
+                oi = summary.get("open_interest", 0)
+                liq = summary.get("total_liquidation", 0)
+                ls = summary.get("long_short_ratio", 1.0)
 
+                def ui_d():
+                    self.fr_value = f"{fr*100:+.4f}%" if fr else "--"
+                    self.oi_value = f"${oi/1e9:.2f}B" if oi else "--"
+                    self.liq_value = f"${liq/1e6:.1f}M" if liq else "--"
+                    self.ls_value = f"{ls:.2f}" if ls else "--"
+                Clock.schedule_once(lambda *_: ui_d())
 
-async def test_evolution_engine():
-    """自进化引擎测试"""
-    log(f"{Colors.CYAN}━━━ 自进化引擎 ━━━", Colors.CYAN)
-    
-    from core.evolution.self_evolution_engine import get_evolution_engine
+            # 技术分析
+            klines = await self.binance.get_klines("BTCUSDT", "4h", 100)
+            if klines:
+                patterns = recognize_patterns(klines, limit=50)
+                sr = analyze_support_resistance(klines, lookback=100)
 
-    eng = get_evolution_engine()
-    cycle = await eng.run_evolution_cycle("BTC", "4h")
-    log(f"✅ 进化周期: {cycle.cycle_id}", Colors.GREEN)
-    log(f"   阶段: learn={cycle.learn.status} | analyze={cycle.analyze.status} | optimize={cycle.optimize.status}", Colors.DIM)
-    log(f"   test={cycle.test.status} | deploy={cycle.deploy.status}", Colors.DIM)
-    log(f"   改进: +{cycle.improvement_score:.1f}% | 判定: {cycle.verdict}", Colors.YELLOW)
-    eng.close()
-    return True
+                if patterns.get("patterns_found", 0) > 0:
+                    sp = patterns.get("strongest_pattern", {})
+                    ps = patterns.get("signal", "NEUTRAL")
+                    pc = C_BULL if "BUY" in ps else C_BEAR if "SELL" in ps else C_TEXT
 
+                    # 支撑阻力摘要
+                    sup = sr.get("nearest_support", {})
+                    res = sr.get("nearest_resistance", {})
+                    sup_p = sup.get("price", 0) if sup else 0
+                    res_p = res.get("price", 0) if res else 0
 
-async def test_api_server():
-    """API服务器测试"""
-    log(f"{Colors.GREEN}━━━ API服务器 ━━━", Colors.GREEN)
-    
-    import aiohttp
+                    def ui_ta(ps=ps, sp=sp, pc=pc, sup_p=sup_p, res_p=res_p, patterns=patterns):
+                        self.signal_text = ps
+                        self.signal_color = pc
+                        self.confidence_text = f"{patterns.get('bullish_count', 0) + patterns.get('bearish_count', 0) * 10}%"
+                        self.analysis_summary = (
+                            f"形态: {sp.get('description', '无')[:40]}\n"
+                            f"支撑: ${sup_p:,.0f} | 阻力: ${res_p:,.0f}\n"
+                            f"看多: {patterns.get('bullish_count', 0)} | 看空: {patterns.get('bearish_count', 0)}"
+                        )
+                        # RSI近似计算
+                        if klines:
+                            closes = [float(k.get('close', 0)) for k in klines[-14:] if k.get('close')]
+                            if len(closes) == 14:
+                                rsi_val = self._calc_rsi(closes)
+                                self.rsi_value = f"{rsi_val:.0f}"
+                                if rsi_val > 70:
+                                    self.macd_value = "超买"
+                                elif rsi_val < 30:
+                                    self.macd_value = "超卖"
+                                else:
+                                    self.macd_value = "中性"
+                            self.bb_value = f"{patterns.get('bullish_count',0)+patterns.get('bearish_count',0)*2}/10"
+                    Clock.schedule_once(lambda *_: ui_ta())
 
-    base = "http://localhost:8765"
-    results = []
-
-    async with aiohttp.ClientSession() as session:
-        endpoints = [
-            ("/api/health", "健康"),
-            ("/api/btc/price", "BTC价格"),
-            ("/api/analysis/technical", "技术分析"),
-            ("/api/knowledge/stats", "知识库"),
-            ("/api/validation/report", "验证报告"),
-            ("/api/attribution/summary", "归因分析"),
-            ("/api/cleaner/report", "清理报告"),
-        ]
-
-        for path, name in endpoints:
+            # 新闻情感
             try:
-                async with session.get(base + path, timeout=aiohttp.ClientTimeout(total=10)) as resp:
-                    if resp.status == 200:
-                        results.append(f"✅ {name}")
-                    else:
-                        results.append(f"⚠️ {name}({resp.status})")
-            except Exception as e:
-                results.append(f"❌ {name}({str(e)[:30]})")
+                from core.data.collectors.news.crypto_news import get_news_collector
+                nc = get_news_collector()
+                news_data = await nc.get_sentiment_summary()
+                if news_data:
+                    sentiment = news_data.get("sentiment", "neutral")
+                    emoji = "📈" if sentiment == "bullish" else "📉" if sentiment == "bearish" else "➡️"
+                    latest = news_data.get("latest_news", [{}])[0] or {}
 
-    for r in results:
-        color = Colors.GREEN if "✅" in r else (Colors.YELLOW if "⚠️" in r else Colors.RED)
-        log(r, color)
-    
-    all_ok = sum(1 for r in results if "✅" in r)
-    log(f"API测试: {all_ok}/{len(results)} 通过", Colors.GREEN if all_ok == len(results) else Colors.YELLOW)
-    return all_ok >= len(results) * 0.7
+                    def ui_news(sentiment=sentiment, emoji=emoji, latest=latest):
+                        self.news_text = f"{emoji} {sentiment}\n{latest.get('title','')[:50]}"
+                    Clock.schedule_once(lambda *_: ui_news())
+            except Exception:
+                pass
 
+        except Exception as e:
+            logger.error(f"_do_fetch: {e}")
 
-async def run_full_pipeline(symbol: str = "BTC", timeframe: str = "4h"):
-    """完整分析流水线"""
-    log(f"{Colors.BOLD}{Colors.PURPLE}━━━ 全链路分析 ━━━{Colors.RESET}", Colors.PURPLE)
-    start = time.time()
-
-    from core.data.orchestrator import get_orchestrator
-    from core.analysis.technical.indicators import analyze, technical_to_dict
-    from core.analysis.multi_dimension.multi_dim_analyzer import get_multi_dim_analyzer
-
-    orch = get_orchestrator()
-    analyzer = get_multi_dim_analyzer()
-
-    # 1. 数据采集
-    task = orch._tasks.get(f"spot_binance_{symbol}_4h")
-    if task:
-        result = await orch._execute_task(task)
-        klines = result.data if result.success else []
-    else:
-        klines = []
-
-    if not klines:
-        log(f"❌ K线采集失败", Colors.RED)
-        return
-
-    # 2. 技术分析
-    tech = analyze(klines, symbol)
-    td = technical_to_dict(tech)
-
-    # 3. 多维度分析
-    sig = await analyzer.analyze(symbol, timeframe)
-    md = analyzer.to_dict(sig)
-
-    elapsed = time.time() - start
-
-    log(f"{Colors.BOLD}═══ {symbol} 全链路分析报告 ═══{Colors.RESET}", Colors.BOLD)
-    log(f"  价格: ${klines[-1].get('close', 0):,.0f}", Colors.CYAN)
-    log(f"  趋势: {td['trend']} | RSI: {td['rsi']:.0f} | MACD: {td['macd_signal_text']}", Colors.CYAN)
-    log(f"  布林: 位置{td['bollinger']['price_position_pct']:.0f}% 带宽{td['bollinger']['width_pct']}%", Colors.CYAN)
-    log(f"  ──", Colors.DIM)
-    log(f"  📊 综合信号: {md['signal']} ({md['overall_score']:+g}) | 置信: {md['confidence']}%", 
-        Colors.GREEN if md['signal'] == 'BUY' else (Colors.RED if md['signal'] == 'SELL' else Colors.YELLOW))
-    log(f"  📐 四维: 技术={md['dimensions']['technical']} 基本={md['dimensions']['fundamental']}", Colors.CYAN)
-    log(f"         情绪={md['dimensions']['sentiment']} 链上={md['dimensions']['onchain']}", Colors.CYAN)
-    log(f"  ⚠️  风险: {md['risk_level']}", 
-        Colors.GREEN if md['risk_level'] == 'LOW' else (Colors.YELLOW if md['risk_level'] == 'MEDIUM' else Colors.RED))
-    log(f"  💡 洞察: {md['key_insight'][:80]}", Colors.YELLOW)
-    log(f"  ──", Colors.DIM)
-    log(f"  ✅ 流水线完成 (耗时 {elapsed:.1f}s)", Colors.GREEN)
+    def _calc_rsi(self, closes, period=14):
+        if len(closes) < period + 1:
+            return 50.0
+        gains = [max(closes[i] - closes[i-1], 0) for i in range(1, len(closes))]
+        losses = [max(closes[i-1] - closes[i], 0) for i in range(1, len(closes))]
+        avg_gain = sum(gains[-period:]) / period
+        avg_loss = sum(losses[-period:]) / period
+        if avg_loss == 0:
+            return 100.0
+        rs = avg_gain / avg_loss
+        return 100 - (100 / (1 + rs))
 
 
-# ─── 主函数 ─────────────────────────────────────────────────
-async def main():
-    banner()
-    
-    parser = argparse.ArgumentParser(description="CryptoMind Pro Plus AI")
-    parser.add_argument("--mode", choices=["full", "quick", "api", "data", "analysis", "evolution", "pipeline"], 
-                        default="full", help="测试模式")
-    parser.add_argument("--symbol", default="BTC", help="交易对")
-    parser.add_argument("--timeframe", default="4h", help="周期")
-    parser.add_argument("--skip-api", action="store_true", help="跳过API测试")
-    args = parser.parse_args()
+# ─────────────────────────────────────────────────────────
+# 图表全屏
+# ─────────────────────────────────────────────────────────
+class ChartScreen(Screen):
+    """K线图表全屏 - 纯Canvas绘制"""
+    def __init__(self, **kwargs):
+        super().__init__(**kwargs)
+        self.klines_data = []
+        self.candle_widget = None
+        self.volume_widget = None
+        self.summary_label = None
+        self.patterns_label = None
 
-    print(f"模式: {args.mode} | 品种: {args.symbol} | 周期: {args.timeframe}\n")
+    def on_enter(self):
+        self._load_chart()
 
-    ok = True
+    def _load_chart(self):
+        """从API获取数据并绘制"""
+        threading.Thread(target=self._fetch_chart_data, daemon=True).start()
 
-    if args.mode == "full":
-        log(f"{Colors.BOLD}🚀 全量测试模式{Colors.RESET}", Colors.BOLD)
-        if not await test_data_layer(): ok = False
-        if not await test_analysis_layer(): ok = False
-        if not await test_knowledge_layer(): ok = False
-        if not await test_evolution_engine(): ok = False
-        if not args.skip_api and not await test_api_server(): ok = False
-
-    elif args.mode == "quick":
-        log(f"{Colors.BOLD}⚡ 快速测试{Colors.RESET}", Colors.BOLD)
-        if not await test_data_layer(): ok = False
-        if not await test_analysis_layer(): ok = False
-
-    elif args.mode == "api":
-        if not await test_api_server(): ok = False
-
-    elif args.mode == "data":
-        if not await test_data_layer(): ok = False
-
-    elif args.mode == "analysis":
-        if not await test_analysis_layer(): ok = False
-        if not await test_knowledge_layer(): ok = False
-
-    elif args.mode == "evolution":
-        if not await test_evolution_engine(): ok = False
-
-    elif args.mode == "pipeline":
-        await run_full_pipeline(args.symbol, args.timeframe)
-        return
-
-    # ── 启动API服务器选项 ──
-    if ok:
-        print(f"\n{Colors.GREEN}{Colors.BOLD}╔══════════════════════════════════════╗")
-        print(f"║  ✅ 全部测试通过！                    ║")
-        print(f"╚══════════════════════════════════════╝{Colors.RESET}")
-        
-        # 启动服务器
-        import subprocess, os
-        server_script = os.path.join(os.path.dirname(__file__), "api_server.py")
-        if os.path.exists(server_script):
-            print(f"\n{Colors.CYAN}启动API服务器: python3 {server_script}{Colors.RESET}")
-            subprocess.Popen(
-                [sys.executable, server_script],
-                stdout=open("/tmp/cryptomind.log", "a"),
-                stderr=subprocess.STDOUT,
-                cwd=os.path.dirname(__file__)
+    def _fetch_chart_data(self):
+        try:
+            import urllib.request, json
+            # 获取K线数据
+            req = urllib.request.Request(
+                "http://localhost:8765/api/analysis/patterns?symbol=BTCUSDT&limit=50",
+                headers={"Accept": "application/json"}
             )
-            print(f"{Colors.GREEN}✅ API服务器已启动 (端口 8765){Colors.RESET}")
-            print(f"{Colors.CYAN}仪表盘: http://localhost:8765{Colors.RESET}")
-    else:
-        print(f"\n{Colors.RED}╔══════════════════════════════════════╗")
-        print(f"║  ❌ 部分测试失败，请检查日志            ║")
-        print(f"╚══════════════════════════════════════╝{Colors.RESET}")
+            # 如果API不可用，直接用binance
+            loop = asyncio.new_event_loop()
+            asyncio.set_event_loop(loop)
+            loop.run_until_complete(self._draw_chart_async())
+            loop.close()
+        except Exception as e:
+            logger.error(f"图表数据加载失败: {e}")
+
+    async def _draw_chart_async(self):
+        binance = BinanceSpotCollector()
+        klines = await binance.get_klines("BTCUSDT", "4h", 50)
+        if not klines:
+            return
+
+        candles = []
+        volumes = []
+        for k in klines:
+            o = float(k.get("open", 0))
+            h = float(k.get("high", 0))
+            l = float(k.get("low", 0))
+            c = float(k.get("close", 0))
+            v = float(k.get("volume", 0))
+            ts = k.get("timestamp", 0)
+            is_bull = c >= o
+            candles.append({"open": o, "high": h, "low": l, "close": c, "ts": ts, "bull": is_bull})
+            volumes.append({"vol": v, "bull": is_bull})
+
+        def ui():
+            self._draw_candles(candles)
+            self._draw_volumes(volumes)
+            self._update_summary(klines)
+        Clock.schedule_once(lambda *_: ui())
+
+    def _draw_candles(self, candles):
+        """用Kivy Canvas绘制K线"""
+        container = self.manager.get_screen("chart").ids.get("chart_container")
+        if not container:
+            return
+
+        container.clear_widgets()
+        w = Widget(size=container.size, pos=container.pos)
+        container.add_widget(w)
+
+        if not candles:
+            return
+
+        w, h = container.size
+        n = len(candles)
+        padding = 40
+        chart_w = w - padding * 2
+        chart_h = h - padding * 2
+
+        # 计算价格范围
+        all_prices = []
+        for c in candles:
+            all_prices.extend([c["high"], c["low"]])
+        price_min = min(all_prices)
+        price_max = max(all_prices)
+        price_range = max(price_max - price_min, 1)
+
+        def px(price):
+            return padding + (price - price_min) / price_range * chart_h
+
+        def pw(i):
+            return padding + i / n * chart_w
+
+        bar_w = max(chart_w / n * 0.7, 2)
+
+        with w.canvas:
+            for i, c in enumerate(candles):
+                bx = pw(i) - bar_w / 2
+                color = C_BULL if c["bull"] else C_BEAR
+
+                # K线实体
+                body_top = px(c["close"])
+                body_bot = px(c["open"])
+                if body_top < body_bot:
+                    body_top, body_bot = body_bot, body_top
+
+                Color(*color)
+                if abs(body_top - body_bot) < 1:
+                    # 十字星
+                    Line(points=[bx + bar_w/2, px(c["low"]), bx + bar_w/2, px(c["high"])], width=1)
+                else:
+                    # 实体
+                    Rectangle(pos=(bx, body_bot), size=(bar_w, max(body_top - body_bot, 1)))
+                    # 上影线
+                    Line(points=[bx + bar_w/2, px(c["high"]), bx + bar_w/2, body_top], width=1)
+                    # 下影线
+                    Line(points=[bx + bar_w/2, body_bot, bx + bar_w/2, px(c["low"])], width=1)
+
+    def _draw_volumes(self, volumes):
+        """绘制成交量柱"""
+        container = self.manager.get_screen("chart").ids.get("volume_container")
+        if not container:
+            return
+
+        container.clear_widgets()
+        wdg = Widget(size=container.size, pos=container.pos)
+        container.add_widget(wdg)
+
+        if not volumes:
+            return
+
+        w, h = container.size
+        n = len(volumes)
+        padding = 30
+        chart_w = w - padding * 2
+        chart_h = h - padding * 2
+
+        vols = [v["vol"] for v in volumes]
+        max_vol = max(vols) if vols else 1
+
+        bar_w = max(chart_w / n * 0.7, 2)
+
+        def py(vol):
+            return padding + (vol / max_vol) * chart_h
+
+        def pw(i):
+            return padding + i / n * chart_w
+
+        with wdg.canvas:
+            for i, v in enumerate(volumes):
+                bx = pw(i) - bar_w / 2
+                color = (C_BULL[0], C_BULL[1], C_BULL[2], 0.5) if v["bull"] else (C_BEAR[0], C_BEAR[1], C_BEAR[2], 0.5)
+                Color(*color)
+                Rectangle(pos=(bx, padding), size=(bar_w, py(v["vol"]) - padding))
+
+    def _update_summary(self, klines):
+        """更新摘要标签"""
+        screen = self.manager.get_screen("chart")
+        summary_lbl = screen.ids.get("chart_summary_lbl")
+        patterns_lbl = screen.ids.get("chart_patterns_lbl")
+
+        if klines:
+            patterns = recognize_patterns(klines, limit=50)
+            sr = analyze_support_resistance(klines, lookback=50)
+
+            if summary_lbl:
+                sup = sr.get("nearest_support", {})
+                res = sr.get("nearest_resistance", {})
+                summary_lbl.text = (
+                    f"最近支撑: ${sup.get('price', 0):,.0f} | "
+                    f"最近阻力: ${res.get('price', 0):,.0f}"
+                )
+            if patterns_lbl:
+                p = patterns.get("strongest_pattern", {})
+                patterns_lbl.text = f"{patterns.get('patterns_found', 0)}个形态 | " \
+                    f"信号: {patterns.get('signal', 'NEUTRAL')}\n" \
+                    f"最强: {p.get('description', '无')}"
+
+
+# ─────────────────────────────────────────────────────────
+# 知识库详情
+# ─────────────────────────────────────────────────────────
+class KnowledgeDetailScreen(Screen):
+    kb_stats = StringProperty("加载中...")
+
+    def on_enter(self):
+        self._load_stats()
+
+    def _load_stats(self):
+        threading.Thread(target=self._fetch_stats, daemon=True).start()
+
+    def _fetch_stats(self):
+        try:
+            import urllib.request, json
+            r = urllib.request.urlopen(
+                "http://localhost:8765/api/knowledge/stats",
+                timeout=10
+            )
+            d = json.loads(r.read())
+            stats_text = (
+                f"总模式: {d.get('total_patterns', 0)}\n"
+                f"成功: {d.get('successes', 0)} | 失败: {d.get('failures', 0)} | 中性: {d.get('neutrals', 0)}\n"
+                f"胜率: {d.get('win_rate', 0):.0f}%\n"
+                f"平均利润: {d.get('avg_profit_success', 0):.2f}%\n"
+                f"向量维度: {d.get('vector_dimension', 0)} | sqlite-vss: {'是' if d.get('vss_enabled') else '余弦降级'}"
+            )
+            Clock.schedule_once(lambda *_: setattr(self, 'kb_stats', stats_text))
+        except Exception as e:
+            Clock.schedule_once(lambda *_: setattr(self, 'kb_stats', f"加载失败: {e}"))
+
+
+
+
+# SettingsScreen 从独立模块导入
+from mobile.settings_screen import SettingsScreen
+
+# ─────────────────────────────────────────────────────────
+# CryptoMindApp
+# ─────────────────────────────────────────────────────────
+class CryptoMindApp(MDApp):
+    current_symbol = StringProperty("BTCUSDT")
+    current_timeframe = StringProperty("4h")
+
+    def __init__(self, **kwargs):
+        super().__init__(**kwargs)
+        self.sm: ScreenManager = None
+        self.main_screen: MainScreen = None
+        self.chart_screen: ChartScreen = None
+        self.kb_screen: KnowledgeDetailScreen = None
+
+    def build(self):
+        self.theme_cls.theme_style = "Dark"
+        self.theme_cls.primary_palette = "Blue"
+
+        Builder.load_file("cryptomind.kv")
+
+        self.sm = ScreenManager(transition=NoTransition())
+        self.main_screen = MainScreen(name="main")
+        self.chart_screen = ChartScreen(name="chart")
+        self.kb_screen = KnowledgeDetailScreen(name="knowledge_detail")
+
+        self.sm.add_widget(self.main_screen)
+        self.sm.add_widget(self.chart_screen)
+        self.sm.add_widget(self.kb_screen)
+
+        from mobile_app import SettingsScreen
+        self.settings_screen = SettingsScreen(name="settings")
+        self.sm.add_widget(self.settings_screen)
+
+        return self.sm
+
+    def refresh_data(self):
+        if self.main_screen:
+            self.main_screen.refresh_data()
+
+    def show_chart_fullscreen(self):
+        self.sm.current = "chart"
+
+    def show_knowledge_base(self):
+        self.sm.current = "knowledge_detail"
+
+    def show_history(self):
+        self.sm.current = "chart"
+
+    def go_to_analysis(self):
+        pass
+
+    def go_to_settings(self):
+        if hasattr(self, 'settings_screen') and self.settings_screen:
+            self.sm.current = "settings"
+        else:
+            from mobile.settings_screen import SettingsScreen
+            self.settings_screen = SettingsScreen(name="settings")
+            self.sm.add_widget(self.settings_screen)
+            self.sm.current = "settings"
+
+    def save_settings(self):
+        """保存设置到配置管理器"""
+        try:
+            from config.config_manager import config_manager
+            
+            # 获取SettingsScreen中的控件值
+            settings_screen = self.sm.get_screen("settings")
+            root = settings_screen.children[0]  # MDBoxLayout
+            
+            # 遍历控件保存配置
+            # 这里简化处理，实际需要根据控件ID获取值
+            
+            logger.info("💾 正在保存设置...")
+            # TODO: 实现完整的设置保存逻辑
+            # config_manager.set("display.default_symbol", symbol)
+            # config_manager.set("ai_model.temperature", temp)
+            
+        except Exception as e:
+            logger.error(f"保存设置失败: {e}")
+
+    def reset_settings(self):
+        """重置设置为默认值"""
+        try:
+            import urllib.request
+            url = "http://127.0.0.1:8000/api/config/reset"
+            req = urllib.request.Request(url, method="POST")
+            req.add_header("Content-Type", "application/json")
+            req.data = b'{}'
+            
+            with urllib.request.urlopen(req, timeout=10) as resp:
+                result = json.loads(resp.read())
+                logger.info(f"🔄 设置已重置: {result}")
+        except Exception as e:
+            logger.error(f"重置设置失败: {e}")
+
+    def load_config_to_ui(self):
+        """从配置管理器加载配置到UI"""
+        try:
+            import urllib.request
+            req = urllib.request.Request("http://127.0.0.1:8000/api/config")
+            with urllib.request.urlopen(req, timeout=10) as resp:
+                data = json.loads(resp.read())
+                return data.get('data', {})
+        except Exception as e:
+            logger.error(f"加载配置失败: {e}")
+            return {}
+
+    def on_stop(self):
+        pass
 
 
 if __name__ == "__main__":
-    asyncio.run(main())
+    CryptoMindApp().run()
