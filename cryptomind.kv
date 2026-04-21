@@ -422,148 +422,20 @@
                 icon: "cog"
 
 
-# 图表全屏
-<ChartScreen>:
-    name: "chart"
-
-    MDBoxLayout:
-        orientation: "vertical"
-        md_bg_color: 0.05, 0.07, 0.10, 1
-
-        MDBoxLayout:
-            size_hint_y: None
-            height: "56dp"
-            padding: "8dp"
-            md_bg_color: 0.07, 0.10, 0.13, 1
-
-            MDIconButton:
-                icon: "arrow-left"
-                theme_icon_color: "Custom"
-                icon_color: 0.90, 0.91, 0.93, 1
-                on_release: app.sm.current = "main"
-
-            MDLabel:
-                text: "BTC/USDT K线图"
-                font_style: "H6"
-                bold: True
-                text_color: 0.90, 0.91, 0.93, 1
-                halign: "center"
-
-            MDLabel:
-                text: "4h周期"
-                theme_text_color: "Custom"
-                text_color: 0.55, 0.58, 0.62, 1
-                font_size: "12sp"
-                halign: "right"
-
-        RelativeLayout:
-            id: chart_container
-            size_hint_y: 0.5
-
-        RelativeLayout:
-            id: volume_container
-            size_hint_y: 0.15
-
-        ScrollView:
-            size_hint_y: 0.35
-
-            MDBoxLayout:
-                orientation: "vertical"
-                padding: "12dp"
-                spacing: "8dp"
-                size_hint_y: None
-                height: self.minimum_height
-
-                MDCard:
-                    padding: "12dp"
-                    radius: [12]
-                    md_bg_color: 0.08, 0.11, 0.15, 1
-                    MDLabel:
-                        text: "技术分析"
-                        font_style: "Subtitle1"
-                        bold: True
-                        text_color: 0.90, 0.91, 0.93, 1
-                    MDLabel:
-                        id: chart_summary_lbl
-                        text: "加载中..."
-                        theme_text_color: "Custom"
-                        text_color: 0.75, 0.76, 0.80, 1
-                        font_size: "13sp"
-                        text_size: self.width, None
-                        size_hint_y: None
-                        height: self.texture_size[1] + 10
-
-                MDCard:
-                    padding: "12dp"
-                    radius: [12]
-                    md_bg_color: 0.08, 0.11, 0.15, 1
-                    MDLabel:
-                        text: "形态识别"
-                        font_style: "Subtitle1"
-                        bold: True
-                        text_color: 0.90, 0.91, 0.93, 1
-                    MDLabel:
-                        id: chart_patterns_lbl
-                        text: "无"
-                        theme_text_color: "Custom"
-                        text_color: 0.75, 0.76, 0.80, 1
-                        font_size: "13sp"
+# 图表全屏 - 未在移动端实现，注释掉避免崩溃
+# <ChartScreen>:
+#     name: "chart"
+#     MDBoxLayout:
+#         orientation: "vertical"
+#         ... (省略完整定义)
 
 
-# 知识库详情
-<KnowledgeDetailScreen>:
-    name: "knowledge_detail"
-
-    MDBoxLayout:
-        orientation: "vertical"
-        md_bg_color: 0.05, 0.07, 0.10, 1
-
-        MDBoxLayout:
-            size_hint_y: None
-            height: "56dp"
-            padding: "8dp"
-            md_bg_color: 0.07, 0.10, 0.13, 1
-
-            MDIconButton:
-                icon: "arrow-left"
-                theme_icon_color: "Custom"
-                icon_color: 0.90, 0.91, 0.93, 1
-                on_release: app.sm.current = "main"
-
-            MDLabel:
-                text: "知识库"
-                font_style: "H6"
-                bold: True
-                text_color: 0.90, 0.91, 0.93, 1
-                halign: "center"
-
-        ScrollView:
-
-            MDBoxLayout:
-                orientation: "vertical"
-                padding: "12dp"
-                spacing: "10dp"
-                size_hint_y: None
-                height: self.minimum_height
-
-                MDCard:
-                    padding: "14dp"
-                    radius: [12]
-                    md_bg_color: 0.08, 0.11, 0.15, 1
-                    MDLabel:
-                        text: "知识库统计"
-                        font_style: "H6"
-                        bold: True
-                        text_color: 0.90, 0.91, 0.93, 1
-                    MDLabel:
-                        id: kb_stats_lbl
-                        text: root.kb_stats
-                        theme_text_color: "Custom"
-                        text_color: 0.75, 0.76, 0.80, 1
-                        font_size: "14sp"
-                        text_size: self.width, None
-                        size_hint_y: None
-                        height: self.texture_size[1] + 10
+# 知识库详情 - 未在移动端实现，注释掉避免崩溃
+# <KnowledgeDetailScreen>:
+#     name: "knowledge_detail"
+#     MDBoxLayout:
+#         orientation: "vertical"
+#         ... (省略完整定义)
 
 
 # 设置页面
