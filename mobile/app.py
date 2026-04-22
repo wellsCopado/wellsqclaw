@@ -167,25 +167,20 @@ class CryptoMindApp(MDApp):
         font_dir = os.path.join(os.path.dirname(os.path.abspath(__file__)), 'fonts')
         font_path = os.path.join(font_dir, 'NotoSansCJKsc-Regular.otf')
         if os.path.isfile(font_path):
-            # KivyMD 1.2.0: 通过 theme_cls.font_styles 覆盖所有内置字体样式
-            # KivyMD 1.2.0 font_styles format: [font_name, size, italic, letter_spacing]
-            # 必须保留 'Icon' 样式用于 MDIconButton 等图标组件
-            self.theme_cls.font_styles = {
-                'H1': [font_path, 96, False, -0.02],
-                'H2': [font_path, 60, False, -0.035],
-                'H3': [font_path, 48, False, -0.04],
-                'H4': [font_path, 34, False, -0.04],
-                'H5': [font_path, 24, False, -0.037],
-                'H6': [font_path, 20, False, -0.033],
-                'Subtitle1': [font_path, 16, False, 0.0075],
-                'Subtitle2': [font_path, 14, False, 0.0034],
-                'Body1': [font_path, 16, False, 0.0075],
-                'Body2': [font_path, 14, False, 0.0034],
-                'Button': [font_path, 14, False, 0.0034],
-                'Caption': [font_path, 12, False, 0.037],
-                'Overline': [font_path, 10, False, 0.067],
-                'Icon': ['Icons', 24, False, 0.0],  # 必须保留，用于 MDIconButton
-            }
+            # KivyMD 1.2.0 中文字体修复
+            # 只覆盖文字样式，保留原始 Icon 样式不变（否则 MDIconButton 崩溃）
+            _original_styles = self.theme_cls.font_styles.copy()
+            _text_styles = [
+                'H1', 'H2', 'H3', 'H4', 'H5', 'H6',
+                'Subtitle1', 'Subtitle2', 'Body1', 'Body2',
+                'Button', 'Caption', 'Overline'
+            ]
+            for _style in _text_styles:
+                _orig = _original_styles.get(_style)
+                if _orig:
+                    self.theme_cls.font_styles[_style] = [
+                        font_path, _orig[1], _orig[2], _orig[3]
+                    ]
         """构建应用界面 - ScreenManager + 底部导航栏
         
         KivyMD 1.2.0 的 MDBottomNavigationItem 不作为 Python 类导出，
