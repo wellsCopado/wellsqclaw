@@ -4,7 +4,7 @@ from kivymd.uix.card import MDCard
 from kivymd.uix.label import MDLabel
 from kivymd.uix.boxlayout import MDBoxLayout
 from kivymd.uix.scrollview import MDScrollView
-from kivymd.uix.toolbar import MDTopAppBar
+from kivymd.uix.toolbar import MDToolbar
 import requests
 
 
@@ -14,7 +14,7 @@ class NewsScreen(Screen):
     def __init__(self, **kwargs):
         super().__init__(**kwargs)
         layout = MDBoxLayout(orientation="vertical")
-        toolbar = MDTopAppBar(
+        toolbar = MDToolbar(
             title="最新资讯",
             left_action_items=[["arrow-left", lambda x: self.go_back()]],
         )

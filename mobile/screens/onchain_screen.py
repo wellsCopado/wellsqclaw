@@ -4,7 +4,7 @@ from kivymd.uix.card import MDCard
 from kivymd.uix.label import MDLabel
 from kivymd.uix.boxlayout import MDBoxLayout
 from kivymd.uix.scrollview import MDScrollView
-from kivymd.uix.toolbar import MDTopAppBar
+from kivymd.uix.toolbar import MDToolbar
 import requests
 
 
@@ -14,7 +14,7 @@ class OnchainScreen(Screen):
     def __init__(self, **kwargs):
         super().__init__(**kwargs)
         layout = MDBoxLayout(orientation="vertical")
-        toolbar = MDTopAppBar(
+        toolbar = MDToolbar(
             title="链上数据",
             left_action_items=[["arrow-left", lambda x: self.go_back()]],
         )
@@ -25,7 +25,7 @@ class OnchainScreen(Screen):
             orientation="vertical",
             spacing="8dp",
             size_hint_y=None,
-            height=self.minimum_height,
+            height=0,
             padding="8dp",
         )
         container.bind(minimum_height=container.setter('height'))
