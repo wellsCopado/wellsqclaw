@@ -11,11 +11,12 @@ from kivy.config import Config
 # Android 兼容配置
 Config.set("kivy", "orientation", "portrait")
 Config.set("kivy", "window_shape", "rounded")
+import os as _os
+# Android 检测必须在导入阶段完成，避免字体加载崩溃
+_android_font_skip = (_os.name == 'posix' and 'ANDROID_ROOT' in _os.environ)
+
 Config.set("graphics", "maxfps", 30)
 
-# Android: 不在此阶段注册任何字体，避免 SDL2_ttf CJK 崩溃
-import os as _os
-_android_font_skip = (_os.name == 'posix' and 'ANDROID_ROOT' in _os.environ)
 if not _android_font_skip:
     # 桌面环境: 查找 fonts 目录 (mobile/fonts/ 或 根目录 fonts/)
     _app_dir = _os.path.dirname(_os.path.abspath(__file__))
