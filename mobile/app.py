@@ -539,7 +539,7 @@ class CryptoMindApp(MDApp):
             pos_hint={"center_x": 0.5, "center_y": 0.77},
             on_release=self.save_server_config,
             theme_text_color="Custom",
-            bg_color=(0.49, 0.73, 1.0, 1),
+            md_bg_color=(0.49, 0.73, 1.0, 1),
         )
         layout.add_widget(save_btn)
         

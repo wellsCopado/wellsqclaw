@@ -71,7 +71,7 @@ class NewsScreen(Screen):
                 padding="12dp",
                 size_hint_y=None,
                 height="100dp",
-                bg_color=(0.1, 0.11, 0.13, 1),
+                md_bg_color=(0.1, 0.11, 0.13, 1),
             )
             box = BoxLayout(orientation="vertical", spacing="4dp")
             box.add_widget(MDLabel(

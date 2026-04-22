@@ -93,7 +93,7 @@ class PaperTradingScreen(Screen):
                 padding="12dp",
                 size_hint_y=None,
                 height="70dp",
-                bg_color=(0.1, 0.11, 0.13, 1),
+                md_bg_color=(0.1, 0.11, 0.13, 1),
             )
             box = BoxLayout(orientation="horizontal")
             box.add_widget(MDLabel(text=label, halign="left", theme_text_color="Secondary"))
@@ -137,7 +137,7 @@ class PaperTradingScreen(Screen):
                 padding="12dp",
                 size_hint_y=None,
                 height="80dp",
-                bg_color=(0.1, 0.11, 0.13, 1),
+                md_bg_color=(0.1, 0.11, 0.13, 1),
             )
             box = BoxLayout(orientation="horizontal")
             box.add_widget(MDLabel(
