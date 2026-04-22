@@ -24,6 +24,10 @@ class OnchainScreen(Screen):
         if self.manager:
             self.manager.current = self.manager.previous() or "home"
     def load_data(self):
+        # 获取全局 app 对象以读取服务器地址
+        from kivy.app import App
+        app = App.get_running_app()
+        
         container = self.ids.get('onchain_container')
         if not container:
             return
@@ -32,7 +36,7 @@ class OnchainScreen(Screen):
         
         # 加载ETH数据
         try:
-            resp = requests.get("http://localhost:8000/api/onchain/ethereum", timeout=5)
+            resp = requests.get(app.server_url + "/api/onchain/ethereum", timeout=5)
             data = resp.json().get("data", {})
         except:
             data = {"error": "数据获取失败"}

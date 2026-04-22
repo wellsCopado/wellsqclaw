@@ -23,6 +23,10 @@ class KnowledgeScreen(Screen):
         if self.manager:
             self.manager.current = self.manager.previous() or "home"
     def load_stats(self):
+        # 获取全局 app 对象以读取服务器地址
+        from kivy.app import App
+        app = App.get_running_app()
+        
         container = self.ids.get('kb_container')
         if not container:
             return
@@ -30,7 +34,7 @@ class KnowledgeScreen(Screen):
         container.clear_widgets()
         
         try:
-            resp = requests.get("http://localhost:8000/api/knowledge/stats", timeout=5)
+            resp = requests.get(app.server_url + "/api/knowledge/stats", timeout=5)
             stats = resp.json().get("stats", {})
         except:
             stats = {}

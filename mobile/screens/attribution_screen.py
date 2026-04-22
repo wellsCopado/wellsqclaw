@@ -23,6 +23,10 @@ class AttributionScreen(Screen):
         if self.manager:
             self.manager.current = self.manager.previous() or "home"
     def load_analysis(self):
+        # 获取全局 app 对象以读取服务器地址
+        from kivy.app import App
+        app = App.get_running_app()
+        
         container = self.ids.get('attr_container')
         if not container:
             return
@@ -30,7 +34,7 @@ class AttributionScreen(Screen):
         container.clear_widgets()
         
         try:
-            resp = requests.get("http://localhost:8000/api/attribution/summary", timeout=5)
+            resp = requests.get(app.server_url + "/api/attribution/summary", timeout=5)
             summary = resp.json().get("summary", {})
         except:
             summary = {}

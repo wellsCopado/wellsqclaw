@@ -26,6 +26,10 @@ class PaperTradingScreen(Screen):
         if self.manager:
             self.manager.current = self.manager.previous() or "home"
     def load_account(self):
+        # 获取全局 app 对象以读取服务器地址
+        from kivy.app import App
+        app = App.get_running_app()
+        
         container = self.ids.get('pt_container')
         if not container:
             return
@@ -33,7 +37,7 @@ class PaperTradingScreen(Screen):
         container.clear_widgets()
         
         try:
-            resp = requests.get("http://localhost:8000/api/trading/account", timeout=5)
+            resp = requests.get(app.server_url + "/api/trading/account", timeout=5)
             acct = resp.json().get("account", {})
         except:
             acct = {}
@@ -70,6 +74,10 @@ class PaperTradingScreen(Screen):
             container.add_widget(card)
     
     def load_positions(self):
+        # 获取全局 app 对象以读取服务器地址
+        from kivy.app import App
+        app = App.get_running_app()
+        
         container = self.ids.get('pt_positions')
         if not container:
             return
@@ -77,7 +85,7 @@ class PaperTradingScreen(Screen):
         container.clear_widgets()
         
         try:
-            resp = requests.get("http://localhost:8000/api/trading/positions", timeout=5)
+            resp = requests.get(app.server_url + "/api/trading/positions", timeout=5)
             positions = resp.json().get("positions", [])
         except:
             positions = []

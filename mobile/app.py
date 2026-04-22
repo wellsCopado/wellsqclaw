@@ -158,6 +158,68 @@ class APIKeyInputContent(BoxLayout):
         pass
 
 
+# ============================================================
+# 全局服务器地址配置（所有 screen 共享）
+# ============================================================
+import json as _json
+
+# 默认后端地址 — 手机上请改为电脑的局域网 IP
+DEFAULT_SERVER_URL = "http://192.168.1.100:8000"
+
+
+def get_server_url():
+    """获取当前配置的后端 API 地址（带持久化）"""
+    _config_paths = []
+    if 'ANDROID_ROOT' in _os.environ:
+        # Android: 使用 app 私有目录
+        try:
+            from jnius import autoclass
+            PythonActivity = autoclass('org.kivy.android.PythonActivity')
+            _app_path = PythonActivity.mActivity.getFilesDir().getAbsolutePath()
+            _config_paths.append(_os.path.join(_app_path, 'server_config.json'))
+        except Exception:
+            pass
+    else:
+        # 桌面端: 项目根目录或 mobile/ 目录
+        _script_dir = _os.path.dirname(_os.path.abspath(__file__))
+        _config_paths.append(_os.path.join(_script_dir, 'server_config.json'))
+        _config_paths.append(_os.path.join(_os.path.dirname(_script_dir), 'server_config.json'))
+    
+    for _p in _config_paths:
+        if _os.path.isfile(_p):
+            try:
+                with open(_p, 'r', encoding='utf-8') as _f:
+                    _cfg = _json.load(_f)
+                    _url = _cfg.get('server_url', '').strip()
+                    if _url:
+                        return _url.rstrip('/')
+            except Exception:
+                pass
+    return DEFAULT_SERVER_URL
+
+
+def save_server_url(url):
+    """保存用户配置的服务器地址到本地文件"""
+    _config_paths = []
+    if 'ANDROID_ROOT' in _os.environ:
+        try:
+            from jnius import autoclass
+            PythonActivity = autoclass('org.kivy.android.PythonActivity')
+            _app_path = PythonActivity.mActivity.getFilesDir().getAbsolutePath()
+            _config_paths.append(_os.path.join(_app_path, 'server_config.json'))
+        except Exception:
+            pass
+    else:
+        _script_dir = _os.path.dirname(_os.path.abspath(__file__))
+        _config_paths.append(_os.path.join(_script_dir, 'server_config.json'))
+    
+    if not _config_paths:
+        return
+    _target = _config_paths[0]
+    with open(_target, 'w', encoding='utf-8') as _f:
+        _json.dump({'server_url': url.rstrip('/')}, _f, ensure_ascii=False, indent=2)
+
+
 class CryptoMindApp(MDApp):
     """CryptoMind Pro Plus AI 主应用"""
     
@@ -167,6 +229,8 @@ class CryptoMindApp(MDApp):
         self.theme_cls.primary_palette = "DeepPurple"
         self.theme_cls.accent_palette = "Teal"
         self.theme_cls.theme_style = "Dark"  # 深色主题
+        # 加载服务器地址配置
+        self.server_url = get_server_url()
     
     def _register_chinese_font_safe(self):
         """Android: 完全跳过字体定制，避免 SDL2_ttf CJK 崩溃"""
@@ -431,10 +495,12 @@ class CryptoMindApp(MDApp):
         return layout
     
     def create_settings_ui(self):
-        """创建设置页UI"""
+        """创建设置页UI — 包含服务器地址配置（手机端关键功能）"""
         from kivymd.uix.floatlayout import MDFloatLayout
         from kivymd.uix.label import MDLabel
         from kivymd.uix.list import MDList, OneLineListItem
+        from kivymd.uix.textfield import MDTextField
+        from kivymd.uix.button import MDRaisedButton
         
         layout = MDFloatLayout()
         
@@ -447,49 +513,89 @@ class CryptoMindApp(MDApp):
         )
         layout.add_widget(title)
         
+        # ===== 服务器地址配置（手机上最关键）=====
+        server_section = MDLabel(
+            text="[b]后端服务器地址[/b]（手机必填）",
+            pos_hint={"center_x": 0.5, "center_y": 0.88},
+            halign="left",
+            markup=True,
+            font_size="14sp"
+        )
+        layout.add_widget(server_section)
+        
+        self.server_input = MDTextField(
+            hint_text="例如: http://192.168.1.100:8000",
+            text=self.server_url,
+            size_hint=(0.9, None),
+            height="48dp",
+            pos_hint={"center_x": 0.5, "center_y": 0.83},
+            mode="fill",
+        )
+        layout.add_widget(self.server_input)
+        
+        save_btn = MDRaisedButton(
+            text="保存并连接",
+            size_hint=(0.5, None),
+            height="40dp",
+            pos_hint={"center_x": 0.5, "center_y": 0.77},
+            on_release=self.save_server_config,
+            theme_text_color="Custom",
+            md_bg_color=(0.49, 0.73, 1.0, 1),
+        )
+        layout.add_widget(save_btn)
+        
+        self.server_status_label = MDLabel(
+            text=f"当前: {self.server_url}",
+            font_size="11sp",
+            halign="center",
+            theme_text_color="Secondary",
+            pos_hint={"center_x": 0.5, "center_y": 0.73},
+        )
+        layout.add_widget(self.server_status_label)
+        
+        # 分隔线提示
+        hint_label = MDLabel(
+            text="↓ 以下为进阶配置 ↓",
+            font_size="11sp",
+            halign="center",
+            theme_text_color="Hint",
+            pos_hint={"center_x": 0.5, "center_y": 0.67},
+        )
+        layout.add_widget(hint_label)
+        
         # API Key 配置区
         api_section = MDLabel(
             text="[b]API Key 配置[/b]",
-            pos_hint={"center_x": 0.5, "center_y": 0.85},
+            pos_hint={"center_x": 0.5, "center_y": 0.60},
             halign="left",
             markup=True
         )
         layout.add_widget(api_section)
         
-        # 交易所配置
         for i, exchange in enumerate(["币安 API", "OKX API", "Bybit API"]):
             item = OneLineListItem(
                 text=exchange,
-                pos_hint={"center_x": 0.5, "center_y": 0.75 - i * 0.08},
+                pos_hint={"center_x": 0.5, "center_y": 0.50 - i * 0.07},
                 size_hint=(0.9, None),
-                height="48dp",
+                height="44dp",
                 on_release=lambda x, t=exchange: self.open_api_dialog(t)
             )
             layout.add_widget(item)
         
-        # AI 模型配置
-        ai_section = MDLabel(
-            text="[b]AI 模型设置[/b]",
-            pos_hint={"center_x": 0.5, "center_y": 0.42},
-            halign="left",
-            markup=True
-        )
-        layout.add_widget(ai_section)
-        
-        model_items = [
-            "本地模型 (Gemma 3 4B)",
-            "云端 API",
-        ]
-        for i, model in enumerate(model_items):
-            item = OneLineListItem(
-                text=model,
-                pos_hint={"center_x": 0.5, "center_y": 0.34 - i * 0.08},
-                size_hint=(0.9, None),
-                height="48dp"
-            )
-            layout.add_widget(item)
-        
         return layout
+    
+    def save_server_config(self, *args):
+        """保存服务器地址配置"""
+        new_url = self.server_input.text.strip()
+        if not new_url:
+            Snackbar(text="请输入服务器地址").open()
+            return
+        if not new_url.startswith('http'):
+            new_url = 'http://' + new_url
+        save_server_url(new_url)
+        self.server_url = new_url
+        self.server_status_label.text = f"已保存: {new_url}"
+        Snackbar(text=f"服务器地址已保存！请返回其他页面刷新数据").open()
     
     def start_analysis(self):
         """开始分析"""
