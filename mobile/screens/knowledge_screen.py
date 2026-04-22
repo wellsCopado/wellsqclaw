@@ -2,7 +2,7 @@
 from kivy.uix.screenmanager import Screen
 from kivymd.uix.card import MDCard
 from kivymd.uix.label import MDLabel
-from kivymd.uix.boxlayout import MDBoxLayout
+from kivy.uix.boxlayout import BoxLayout
 from kivy.uix.boxlayout import BoxLayout
 from kivymd.uix.scrollview import MDScrollView
 from kivymd.uix.toolbar import MDTopAppBar
@@ -15,7 +15,7 @@ class KnowledgeScreen(Screen):
     def __init__(self, **kwargs):
         super().__init__(**kwargs)
         # 程序化构建UI（不依赖KV，避免KV加载失败导致黑屏）
-        layout = MDBoxLayout(orientation="vertical")
+        layout = BoxLayout(orientation="vertical")
         toolbar = MDTopAppBar(
             title="知识库",
             left_action_items=[["arrow-left", lambda x: self.go_back()]],
@@ -72,7 +72,7 @@ class KnowledgeScreen(Screen):
                 height="70dp",
                 md_bg_color=(0.1, 0.11, 0.13, 1),
             )
-            box = MDBoxLayout(orientation="horizontal")
+            box = BoxLayout(orientation="horizontal")
             box.add_widget(MDLabel(text=label, halign="left", theme_text_color="Secondary"))
             box.add_widget(MDLabel(text=value, halign="right", theme_text_color="Primary", bold=True))
             card.add_widget(box)

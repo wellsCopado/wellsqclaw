@@ -2,7 +2,7 @@
 from kivy.uix.screenmanager import Screen
 from kivymd.uix.card import MDCard
 from kivymd.uix.label import MDLabel
-from kivymd.uix.boxlayout import MDBoxLayout
+from kivy.uix.boxlayout import BoxLayout
 from kivy.uix.boxlayout import BoxLayout
 from kivymd.uix.scrollview import MDScrollView
 from kivymd.uix.toolbar import MDTopAppBar
@@ -14,7 +14,7 @@ class NewsScreen(Screen):
 
     def __init__(self, **kwargs):
         super().__init__(**kwargs)
-        layout = MDBoxLayout(orientation="vertical")
+        layout = BoxLayout(orientation="vertical")
         toolbar = MDTopAppBar(
             title="最新资讯",
             left_action_items=[["arrow-left", lambda x: self.go_back()]],
@@ -73,7 +73,7 @@ class NewsScreen(Screen):
                 height="100dp",
                 md_bg_color=(0.1, 0.11, 0.13, 1),
             )
-            box = MDBoxLayout(orientation="vertical", spacing="4dp")
+            box = BoxLayout(orientation="vertical", spacing="4dp")
             box.add_widget(MDLabel(
                 text=item.get("title", "无标题")[:50],
                 halign="left",

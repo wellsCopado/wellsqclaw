@@ -13,7 +13,7 @@ class OnchainScreen(Screen):
 
     def __init__(self, **kwargs):
         super().__init__(**kwargs)
-        layout = MDBoxLayout(orientation="vertical")
+        layout = BoxLayout(orientation="vertical")
         toolbar = MDTopAppBar(
             title="链上数据",
             left_action_items=[["arrow-left", lambda x: self.go_back()]],
@@ -73,7 +73,7 @@ class OnchainScreen(Screen):
                 height="80dp",
                 md_bg_color=(0.1, 0.11, 0.13, 1),
             )
-            box = MDBoxLayout(orientation="horizontal")
+            box = BoxLayout(orientation="horizontal")
             box.add_widget(MDLabel(text=label, halign="left", theme_text_color="Secondary"))
             box.add_widget(MDLabel(text=value, halign="right", theme_text_color="Primary"))
             card.add_widget(box)

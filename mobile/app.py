@@ -272,7 +272,7 @@ class CryptoMindApp(MDApp):
         只在 KV 语言中可用。因此用 ScreenManager + 自定义底部栏实现导航。
         """
         from kivy.uix.screenmanager import ScreenManager
-        from kivymd.uix.boxlayout import MDBoxLayout
+        from kivy.uix.boxlayout import BoxLayout
 
         # Android 安全字体注册
         self._register_chinese_font_safe()
@@ -328,7 +328,7 @@ class CryptoMindApp(MDApp):
         sm.add_widget(settings)
         
         # 底部导航栏
-        nav_bar = MDBoxLayout(
+        nav_bar = BoxLayout(
             orientation="horizontal",
             size_hint_y=None,
             height="56dp",
@@ -350,7 +350,7 @@ class CryptoMindApp(MDApp):
             self._tab_buttons.append((name, btn))
         
         # 主布局: ScreenManager + 底部导航
-        root = MDBoxLayout(orientation="vertical")
+        root = BoxLayout(orientation="vertical")
         root.add_widget(sm)
         root.add_widget(nav_bar)
         

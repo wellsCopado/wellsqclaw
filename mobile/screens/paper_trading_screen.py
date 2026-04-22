@@ -2,7 +2,7 @@
 from kivy.uix.screenmanager import Screen
 from kivymd.uix.card import MDCard
 from kivymd.uix.label import MDLabel
-from kivymd.uix.boxlayout import MDBoxLayout
+from kivy.uix.boxlayout import BoxLayout
 from kivy.uix.boxlayout import BoxLayout
 from kivymd.uix.button import MDRaisedButton
 from kivymd.uix.scrollview import MDScrollView
@@ -16,7 +16,7 @@ class PaperTradingScreen(Screen):
 
     def __init__(self, **kwargs):
         super().__init__(**kwargs)
-        layout = MDBoxLayout(orientation="vertical")
+        layout = BoxLayout(orientation="vertical")
         toolbar = MDTopAppBar(
             title="模拟交易",
             left_action_items=[["arrow-left", lambda x: self.go_back()]],
@@ -95,7 +95,7 @@ class PaperTradingScreen(Screen):
                 height="70dp",
                 md_bg_color=(0.1, 0.11, 0.13, 1),
             )
-            box = MDBoxLayout(orientation="horizontal")
+            box = BoxLayout(orientation="horizontal")
             box.add_widget(MDLabel(text=label, halign="left", theme_text_color="Secondary"))
             lbl = MDLabel(text=value, halign="right", bold=True)
             if label == "总盈亏":
@@ -139,7 +139,7 @@ class PaperTradingScreen(Screen):
                 height="80dp",
                 md_bg_color=(0.1, 0.11, 0.13, 1),
             )
-            box = MDBoxLayout(orientation="horizontal")
+            box = BoxLayout(orientation="horizontal")
             box.add_widget(MDLabel(
                 text=f"{pos.get('symbol','BTC')} {pos.get('side','LONG')} {pos.get('quantity',0)}",
                 halign="left",
