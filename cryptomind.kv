@@ -816,14 +816,13 @@
         MDTopAppBar:
             title: "📰 最新资讯"
             left_action_items: [["arrow-left", lambda x: root.go_back()]]
-        ScrollView:
+        MDScrollView:
             do_scroll_y: True
             MDBoxLayout:
                 id: news_container
                 orientation: "vertical"
                 spacing: "8dp"
                 size_hint_y: None
-                height: self.minimum_height
                 padding: "8dp"
 
 # ==================== 链上数据屏幕 ====================
