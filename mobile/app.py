@@ -20,9 +20,16 @@ if _os.name == 'posix' and 'ANDROID_ROOT' in _os.environ:
     # Android 环境: 不在 import 阶段注册字体，延迟到 build() 中处理
     pass
 else:
-    # 桌面环境
-    _FONT_DIR = _os.path.join(_os.path.dirname(_os.path.abspath(__file__)), 'fonts')
-    _FONT_PATH = _os.path.join(_FONT_DIR, 'NotoSansCJKsc-Regular.otf')
+    # 桌面环境: 查找 fonts 目录 (mobile/fonts/ 或 根目录 fonts/)
+    _app_dir = _os.path.dirname(_os.path.abspath(__file__))
+    for _fd in [_os.path.join(_app_dir, 'fonts'), _os.path.join(_os.path.dirname(_app_dir), 'fonts')]:
+        if _os.path.isdir(_fd):
+            _FONT_DIR = _fd
+            break
+    else:
+        _FONT_DIR = None
+    if _FONT_DIR:
+        _FONT_PATH = _os.path.join(_FONT_DIR, 'NotoSansCJKsc-Regular.otf')
     if _os.path.isfile(_FONT_PATH):
         Config.set('kivy', 'default_font', ['NotoSansCJKsc', _FONT_PATH, 'Roboto'])
         from kivy.resources import resource_add_path
@@ -168,7 +175,14 @@ class CryptoMindApp(MDApp):
         """Android 安全字体注册 — 仅在字体存在且可加载时启用"""
         import os
         try:
-            font_dir = os.path.join(os.path.dirname(os.path.abspath(__file__)), 'fonts')
+            # 字体查找: 先找 mobile/fonts/, 再找项目根 fonts/
+            _app_dir = os.path.dirname(os.path.abspath(__file__))
+            for _fd in [os.path.join(_app_dir, 'fonts'), os.path.join(os.path.dirname(_app_dir), 'fonts')]:
+                if os.path.isdir(_fd):
+                    font_dir = _fd
+                    break
+            else:
+                return  # 找不到 fonts 目录
             font_path = os.path.join(font_dir, 'NotoSansCJKsc-Regular.otf')
             if not os.path.isfile(font_path):
                 return
