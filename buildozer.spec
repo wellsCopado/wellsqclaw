@@ -10,8 +10,9 @@ source.dir = .
 version = 6.0.0
 
 # 源码
-source.include_exts = py,png,jpg,kv,atlas,gguf,db,json,txt,md,otf,ttf
-source.include_patterns = mobile/fonts/*.otf,mobile/fonts/*.ttf
+# 注: otf/ttf 字体文件已排除 — Kivy SDL2_ttf 无法加载 CJK 字体，字体包不打包入 APK
+source.include_exts = py,png,jpg,kv,atlas,gguf,db,json,txt,md
+source.include_patterns = 
 
 # 入口
 main.pyfile = mobile_app.py

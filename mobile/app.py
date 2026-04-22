@@ -13,13 +13,10 @@ Config.set("kivy", "orientation", "portrait")
 Config.set("kivy", "window_shape", "rounded")
 Config.set("graphics", "maxfps", 30)
 
-# Android 字体路径兼容 — 仅桌面端启用中文字体，Android 端跳过避免 SDL2_ttf 崩溃
+# Android: 不在此阶段注册任何字体，避免 SDL2_ttf CJK 崩溃
 import os as _os
-
-if _os.name == 'posix' and 'ANDROID_ROOT' in _os.environ:
-    # Android 环境: 不在 import 阶段注册字体，延迟到 build() 中处理
-    pass
-else:
+_android_font_skip = (_os.name == 'posix' and 'ANDROID_ROOT' in _os.environ)
+if not _android_font_skip:
     # 桌面环境: 查找 fonts 目录 (mobile/fonts/ 或 根目录 fonts/)
     _app_dir = _os.path.dirname(_os.path.abspath(__file__))
     for _fd in [_os.path.join(_app_dir, 'fonts'), _os.path.join(_os.path.dirname(_app_dir), 'fonts')]:
@@ -30,7 +27,7 @@ else:
         _FONT_DIR = None
     if _FONT_DIR:
         _FONT_PATH = _os.path.join(_FONT_DIR, 'NotoSansCJKsc-Regular.otf')
-    if _os.path.isfile(_FONT_PATH):
+    if _FONT_DIR and _os.path.isfile(_FONT_PATH):
         Config.set('kivy', 'default_font', ['NotoSansCJKsc', _FONT_PATH, 'Roboto'])
         from kivy.resources import resource_add_path
         resource_add_path(_FONT_DIR)
@@ -172,24 +169,23 @@ class CryptoMindApp(MDApp):
         self.theme_cls.theme_style = "Dark"  # 深色主题
     
     def _register_chinese_font_safe(self):
-        """桌面端字体注册 — Android 上完全跳过（Kivy SDL2_ttf 无法加载 CJK 字体）"""
+        """Android: 完全跳过字体定制，避免 SDL2_ttf CJK 崩溃"""
+        # Android: 跳过所有字体定制
         import os as _os
-        # Android 端: 完全跳过字体注册，避免 SDL2_ttf ValueError
         if _os.name == 'posix' and 'ANDROID_ROOT' in _os.environ:
             return
+        # 桌面: 字体定制逻辑可在此添加（当前 Android 优先，待后续稳定后扩展）
         try:
-            # 字体查找: 先找 mobile/fonts/, 再找项目根 fonts/
             _app_dir = _os.path.dirname(_os.path.abspath(__file__))
             for _fd in [_os.path.join(_app_dir, 'fonts'), _os.path.join(_os.path.dirname(_app_dir), 'fonts')]:
                 if _os.path.isdir(_fd):
                     font_dir = _fd
                     break
             else:
-                return  # 找不到 fonts 目录
+                return
             font_path = _os.path.join(font_dir, 'NotoSansCJKsc-Regular.otf')
             if not _os.path.isfile(font_path):
                 return
-            # 只覆盖文字样式，保留 Icon 样式
             _original_styles = self.theme_cls.font_styles.copy()
             _text_styles = [
                 'H1', 'H2', 'H3', 'H4', 'H5', 'H6',
@@ -203,7 +199,7 @@ class CryptoMindApp(MDApp):
                         font_path, _orig[1], _orig[2], _orig[3]
                     ]
         except Exception:
-            pass  # 字体注册失败不影响启动
+            pass
 
     def build(self):
         """构建应用界面 - ScreenManager + 底部导航栏
