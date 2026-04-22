@@ -150,6 +150,18 @@ class CryptoMindApp(MDApp):
         self.theme_cls.theme_style = "Dark"  # 深色主题
     
     def build(self):
+        # 注册中文字体（解决 Android 上中文显示为方块的问题）
+        from kivy.resources import resource_add_path
+        import os
+        font_dir = os.path.join(os.path.dirname(os.path.abspath(__file__)), 'fonts')
+        if os.path.isdir(font_dir):
+            resource_add_path(font_dir)
+            from kivy.core.text import Label
+            Label.register('NotoSansCJKsc',
+                           os.path.join(font_dir, 'NotoSansCJKsc-Regular.otf'))
+            # 设置为默认字体
+            from kivy.config import Config
+            Config.set('kivy', 'default_font', ['NotoSansCJKsc', 'Roboto', 'data/fonts/Roboto-Regular.ttf'])
         """构建应用界面 - ScreenManager + 底部导航栏
         
         KivyMD 1.2.0 的 MDBottomNavigationItem 不作为 Python 类导出，

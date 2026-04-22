@@ -10,7 +10,7 @@ source.dir = .
 version = 6.0.0
 
 # 源码
-source.include_exts = py,png,jpg,kv,atlas,gguf,db,json,txt,md
+source.include_exts = py,png,jpg,kv,atlas,gguf,db,json,txt,md,otf,ttf
 
 # 入口
 main.pyfile = mobile_app.py
