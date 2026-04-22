@@ -3,42 +3,61 @@ from kivy.uix.screenmanager import Screen
 from kivymd.uix.card import MDCard
 from kivymd.uix.label import MDLabel
 from kivymd.uix.boxlayout import MDBoxLayout
+from kivymd.uix.scrollview import MDScrollView
+from kivymd.uix.toolbar import MDTopAppBar
 import requests
 
 
 class AttributionScreen(Screen):
+    """归因分析屏幕"""
+
+    def __init__(self, **kwargs):
+        super().__init__(**kwargs)
+        layout = MDBoxLayout(orientation="vertical")
+        toolbar = MDTopAppBar(
+            title="归因分析",
+            left_action_items=[["arrow-left", lambda x: self.go_back()]],
+        )
+        layout.add_widget(toolbar)
+        scroll = MDScrollView()
+        container = MDBoxLayout(
+            id="attr_container",
+            orientation="vertical",
+            spacing="8dp",
+            size_hint_y=None,
+            height=self.minimum_height,
+            padding="8dp",
+        )
+        container.bind(minimum_height=container.setter('height'))
+        scroll.add_widget(container)
+        layout.add_widget(scroll)
+        self.add_widget(layout)
 
     def go_back(self):
         """返回上一页"""
         if self.manager:
-            self.manager.current = self.manager.previous() or "home"
-    """归因分析屏幕"""
-    
+            self.manager.current = "home"
+
     def on_enter(self):
         self.load_analysis()
-    
 
-    def go_back(self):
-        """返回上一页"""
-        if self.manager:
-            self.manager.current = self.manager.previous() or "home"
     def load_analysis(self):
         # 获取全局 app 对象以读取服务器地址
         from kivy.app import App
         app = App.get_running_app()
-        
+
         container = self.ids.get('attr_container')
         if not container:
             return
-        
+
         container.clear_widgets()
-        
+
         try:
             resp = requests.get(app.server_url + "/api/attribution/summary", timeout=5)
             summary = resp.json().get("summary", {})
         except:
             summary = {}
-        
+
         factors = summary.get("factors", [
             {"name": "技术面", "contribution": summary.get("technical", 0.3)},
             {"name": "资金面", "contribution": summary.get("funding", 0.25)},
@@ -46,7 +65,7 @@ class AttributionScreen(Screen):
             {"name": "执行面", "contribution": summary.get("execution", 0.15)},
             {"name": "风险面", "contribution": summary.get("risk", 0.1)},
         ])
-        
+
         for factor in factors:
             card = MDCard(
                 padding="12dp",
@@ -60,7 +79,6 @@ class AttributionScreen(Screen):
                 halign="left",
                 theme_text_color="Primary"
             ))
-            # 进度条
             from kivymd.uix.progressbar import MDProgressBar
             bar = MDProgressBar(
                 value=factor.get("contribution", 0) * 100,

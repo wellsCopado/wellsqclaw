@@ -164,7 +164,7 @@ class APIKeyInputContent(BoxLayout):
 import json as _json
 
 # 默认后端地址 — 手机上请改为电脑的局域网 IP
-DEFAULT_SERVER_URL = "http://192.168.1.100:8000"
+DEFAULT_SERVER_URL = "http://192.168.31.218:8000"
 
 
 def get_server_url():
