@@ -22,7 +22,6 @@ class AttributionScreen(Screen):
         layout.add_widget(toolbar)
         scroll = MDScrollView()
         container = BoxLayout(
-            id="attr_container",
             orientation="vertical",
             spacing=8,
             size_hint_y=None,
@@ -33,6 +32,7 @@ class AttributionScreen(Screen):
         scroll.add_widget(container)
         layout.add_widget(scroll)
         self.add_widget(layout)
+        self.attr_container = container
 
     def go_back(self):
         """返回上一页"""
@@ -47,9 +47,7 @@ class AttributionScreen(Screen):
         from kivy.app import App
         app = App.get_running_app()
 
-        container = self.ids.get('attr_container')
-        if not container:
-            return
+        container = self.attr_container
 
         container.clear_widgets()
 

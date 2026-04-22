@@ -24,7 +24,6 @@ class PaperTradingScreen(Screen):
         layout.add_widget(toolbar)
         scroll = MDScrollView()
         main = BoxLayout(
-            id="pt_main",
             orientation="vertical",
             spacing=8,
             size_hint_y=None,
@@ -33,7 +32,6 @@ class PaperTradingScreen(Screen):
         )
         main.bind(minimum_height=main.setter('height'))
         pt_container = BoxLayout(
-            id="pt_container",
             orientation="vertical",
             spacing=8,
             size_hint_y=None,
@@ -42,7 +40,6 @@ class PaperTradingScreen(Screen):
         pt_container.bind(minimum_height=pt_container.setter('height'))
         main.add_widget(pt_container)
         pt_positions = BoxLayout(
-            id="pt_positions",
             orientation="vertical",
             spacing=8,
             size_hint_y=None,
@@ -53,6 +50,8 @@ class PaperTradingScreen(Screen):
         scroll.add_widget(main)
         layout.add_widget(scroll)
         self.add_widget(layout)
+        self.pt_container = pt_container
+        self.pt_positions = pt_positions
 
     def go_back(self):
         """返回上一页"""
@@ -68,9 +67,7 @@ class PaperTradingScreen(Screen):
         from kivy.app import App
         app = App.get_running_app()
 
-        container = self.ids.get('pt_container')
-        if not container:
-            return
+        container = self.pt_container
 
         container.clear_widgets()
 
@@ -115,9 +112,7 @@ class PaperTradingScreen(Screen):
         from kivy.app import App
         app = App.get_running_app()
 
-        container = self.ids.get('pt_positions')
-        if not container:
-            return
+        container = self.pt_positions
 
         container.clear_widgets()
 
