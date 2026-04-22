@@ -3,6 +3,7 @@ from kivy.uix.screenmanager import Screen
 from kivymd.uix.card import MDCard
 from kivymd.uix.label import MDLabel
 from kivymd.uix.boxlayout import MDBoxLayout
+from kivy.uix.boxlayout import BoxLayout
 from kivymd.uix.scrollview import MDScrollView
 from kivymd.uix.toolbar import MDToolbar
 import requests
@@ -20,12 +21,12 @@ class NewsScreen(Screen):
         )
         layout.add_widget(toolbar)
         scroll = MDScrollView()
-        container = MDBoxLayout(
+        container = BoxLayout(
             id="news_container",
             orientation="vertical",
-            spacing="8dp",
+            spacing=8,
             size_hint_y=None,
-            padding="8dp",
+            padding=[8, 8, 8, 8],
         )
         container.bind(minimum_height=container.setter('height'))
         scroll.add_widget(container)

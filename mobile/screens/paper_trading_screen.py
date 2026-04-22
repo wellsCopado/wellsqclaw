@@ -3,6 +3,7 @@ from kivy.uix.screenmanager import Screen
 from kivymd.uix.card import MDCard
 from kivymd.uix.label import MDLabel
 from kivymd.uix.boxlayout import MDBoxLayout
+from kivy.uix.boxlayout import BoxLayout
 from kivymd.uix.button import MDRaisedButton
 from kivymd.uix.scrollview import MDScrollView
 from kivymd.uix.toolbar import MDToolbar
@@ -22,28 +23,28 @@ class PaperTradingScreen(Screen):
         )
         layout.add_widget(toolbar)
         scroll = MDScrollView()
-        main = MDBoxLayout(
+        main = BoxLayout(
             id="pt_main",
             orientation="vertical",
-            spacing="8dp",
+            spacing=8,
             size_hint_y=None,
             height=0,
-            padding="8dp",
+            padding=[8, 8, 8, 8],
         )
         main.bind(minimum_height=main.setter('height'))
-        pt_container = MDBoxLayout(
+        pt_container = BoxLayout(
             id="pt_container",
             orientation="vertical",
-            spacing="8dp",
+            spacing=8,
             size_hint_y=None,
             height=0,
         )
         pt_container.bind(minimum_height=pt_container.setter('height'))
         main.add_widget(pt_container)
-        pt_positions = MDBoxLayout(
+        pt_positions = BoxLayout(
             id="pt_positions",
             orientation="vertical",
-            spacing="8dp",
+            spacing=8,
             size_hint_y=None,
             height=0,
         )
