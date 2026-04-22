@@ -15,15 +15,35 @@ Config.set("graphics", "maxfps", 30)
 
 # ====== 中文字体注册（必须在 import Kivy/KivyMD 之前）======
 import os as _os
-_FONT_DIR = _os.path.join(_os.path.dirname(_os.path.abspath(__file__)), 'fonts')
-if _os.path.isdir(_FONT_DIR):
-    _FONT_PATH = _os.path.join(_FONT_DIR, 'NotoSansCJKsc-Regular.otf')
-    if _os.path.isfile(_FONT_PATH):
-        # 设置 Kivy 默认字体为支持中文的 Noto Sans CJK
-        Config.set('kivy', 'default_font', ['NotoSansCJKsc', _FONT_PATH, 'Roboto'])
-        # 注册资源路径
-        from kivy.resources import resource_add_path
-        resource_add_path(_FONT_DIR)
+
+# Android 字体路径兼容
+if _os.name == 'posix' and 'ANDROID_ROOT' in _os.environ:
+    # Android 环境: 从 assets 或私有目录加载字体
+    _FONT_DIR = '/data/data/com.cryptomind.cryptomindpro/files/app/mobile/fonts'
+else:
+    _FONT_DIR = _os.path.join(_os.path.dirname(_os.path.abspath(__file__)), 'fonts')
+
+_FONT_PATH = _os.path.join(_FONT_DIR, 'NotoSansCJKsc-Regular.otf')
+
+if _os.path.isfile(_FONT_PATH):
+    # 设置 Kivy 默认字体为支持中文的 Noto Sans CJK
+    Config.set('kivy', 'default_font', ['NotoSansCJKsc', _FONT_PATH, 'Roboto'])
+    # 注册资源路径
+    from kivy.resources import resource_add_path
+    resource_add_path(_FONT_DIR)
+else:
+    # 尝试其他可能的路径
+    _alt_paths = [
+        _os.path.join(_os.path.dirname(_os.path.dirname(_os.path.abspath(__file__))), 'mobile', 'fonts', 'NotoSansCJKsc-Regular.otf'),
+        '/data/data/com.cryptomind.cryptomindpro/files/app/fonts/NotoSansCJKsc-Regular.otf',
+        '/data/data/com.cryptomind.cryptomindpro/files/app/mobile/fonts/NotoSansCJKsc-Regular.otf',
+    ]
+    for _alt in _alt_paths:
+        if _os.path.isfile(_alt):
+            Config.set('kivy', 'default_font', ['NotoSansCJKsc', _alt, 'Roboto'])
+            from kivy.resources import resource_add_path
+            resource_add_path(_os.path.dirname(_alt))
+            break
 
 from kivymd.app import MDApp
 from kivymd.uix.screen import MDScreen
