@@ -172,19 +172,22 @@ class CryptoMindApp(MDApp):
         self.theme_cls.theme_style = "Dark"  # 深色主题
     
     def _register_chinese_font_safe(self):
-        """Android 安全字体注册 — 仅在字体存在且可加载时启用"""
-        import os
+        """桌面端字体注册 — Android 上完全跳过（Kivy SDL2_ttf 无法加载 CJK 字体）"""
+        import os as _os
+        # Android 端: 完全跳过字体注册，避免 SDL2_ttf ValueError
+        if _os.name == 'posix' and 'ANDROID_ROOT' in _os.environ:
+            return
         try:
             # 字体查找: 先找 mobile/fonts/, 再找项目根 fonts/
-            _app_dir = os.path.dirname(os.path.abspath(__file__))
-            for _fd in [os.path.join(_app_dir, 'fonts'), os.path.join(os.path.dirname(_app_dir), 'fonts')]:
-                if os.path.isdir(_fd):
+            _app_dir = _os.path.dirname(_os.path.abspath(__file__))
+            for _fd in [_os.path.join(_app_dir, 'fonts'), _os.path.join(_os.path.dirname(_app_dir), 'fonts')]:
+                if _os.path.isdir(_fd):
                     font_dir = _fd
                     break
             else:
                 return  # 找不到 fonts 目录
-            font_path = os.path.join(font_dir, 'NotoSansCJKsc-Regular.otf')
-            if not os.path.isfile(font_path):
+            font_path = _os.path.join(font_dir, 'NotoSansCJKsc-Regular.otf')
+            if not _os.path.isfile(font_path):
                 return
             # 只覆盖文字样式，保留 Icon 样式
             _original_styles = self.theme_cls.font_styles.copy()
