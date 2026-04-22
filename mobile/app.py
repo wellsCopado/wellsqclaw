@@ -352,11 +352,11 @@ class CryptoMindApp(MDApp):
         
         # 加载指示器 - MDProgressBar
         progress = MDProgressBar(
-            id="spinner",
             pos_hint={"center_x": 0.5, "center_y": 0.15},
             size_hint_x=0.4,
             value=0
         )
+        progress.id = "spinner"
         layout.add_widget(progress)
         
         return layout
