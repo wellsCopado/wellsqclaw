@@ -232,11 +232,11 @@ class CryptoMindApp(MDApp):
         self.theme_cls.theme_style = "Dark"  # 深色主题
         # 加载服务器地址配置
         self.server_url = get_server_url()
-        # Android嵌入式模式：启动后台FastAPI服务器
+        # Android嵌入式模式：启动后台轻量HTTP服务器
         self._start_embedded_server()
     
     def _start_embedded_server(self):
-        """启动嵌入式FastAPI服务器（Android模式）"""
+        """启动嵌入式轻量HTTP服务器（Android模式）"""
         if 'ANDROID_ROOT' in _os.environ:
             try:
                 from mobile.embedded_server import start_server, wait_for_server
