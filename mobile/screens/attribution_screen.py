@@ -5,7 +5,7 @@ from kivymd.uix.label import MDLabel
 from kivymd.uix.boxlayout import MDBoxLayout
 from kivy.uix.boxlayout import BoxLayout
 from kivymd.uix.scrollview import MDScrollView
-from kivymd.uix.toolbar import MDToolbar
+from kivymd.uix.toolbar import MDTopAppBar
 import requests
 
 
@@ -15,7 +15,7 @@ class AttributionScreen(Screen):
     def __init__(self, **kwargs):
         super().__init__(**kwargs)
         layout = MDBoxLayout(orientation="vertical")
-        toolbar = MDToolbar(
+        toolbar = MDTopAppBar(
             title="归因分析",
             left_action_items=[["arrow-left", lambda x: self.go_back()]],
         )

@@ -6,7 +6,7 @@ from kivymd.uix.boxlayout import MDBoxLayout
 from kivy.uix.boxlayout import BoxLayout
 from kivymd.uix.button import MDRaisedButton
 from kivymd.uix.scrollview import MDScrollView
-from kivymd.uix.toolbar import MDToolbar
+from kivymd.uix.toolbar import MDTopAppBar
 import requests
 import json
 
@@ -17,7 +17,7 @@ class PaperTradingScreen(Screen):
     def __init__(self, **kwargs):
         super().__init__(**kwargs)
         layout = MDBoxLayout(orientation="vertical")
-        toolbar = MDToolbar(
+        toolbar = MDTopAppBar(
             title="模拟交易",
             left_action_items=[["arrow-left", lambda x: self.go_back()]],
         )

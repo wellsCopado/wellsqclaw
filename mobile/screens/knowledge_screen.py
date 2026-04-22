@@ -5,7 +5,7 @@ from kivymd.uix.label import MDLabel
 from kivymd.uix.boxlayout import MDBoxLayout
 from kivy.uix.boxlayout import BoxLayout
 from kivymd.uix.scrollview import MDScrollView
-from kivymd.uix.toolbar import MDToolbar
+from kivymd.uix.toolbar import MDTopAppBar
 import requests
 
 
@@ -16,7 +16,7 @@ class KnowledgeScreen(Screen):
         super().__init__(**kwargs)
         # 程序化构建UI（不依赖KV，避免KV加载失败导致黑屏）
         layout = MDBoxLayout(orientation="vertical")
-        toolbar = MDToolbar(
+        toolbar = MDTopAppBar(
             title="知识库",
             left_action_items=[["arrow-left", lambda x: self.go_back()]],
         )
