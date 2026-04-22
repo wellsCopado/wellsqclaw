@@ -25,7 +25,6 @@ class NewsScreen(Screen):
             orientation="vertical",
             spacing="8dp",
             size_hint_y=None,
-            height=self.minimum_height,
             padding="8dp",
         )
         container.bind(minimum_height=container.setter('height'))
