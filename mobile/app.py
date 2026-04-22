@@ -13,37 +13,20 @@ Config.set("kivy", "orientation", "portrait")
 Config.set("kivy", "window_shape", "rounded")
 Config.set("graphics", "maxfps", 30)
 
-# ====== 中文字体注册（必须在 import Kivy/KivyMD 之前）======
+# Android 字体路径兼容 — 仅桌面端启用中文字体，Android 端跳过避免 SDL2_ttf 崩溃
 import os as _os
 
-# Android 字体路径兼容
 if _os.name == 'posix' and 'ANDROID_ROOT' in _os.environ:
-    # Android 环境: 从 assets 或私有目录加载字体
-    _FONT_DIR = '/data/data/com.cryptomind.cryptomindpro/files/app/mobile/fonts'
+    # Android 环境: 不在 import 阶段注册字体，延迟到 build() 中处理
+    pass
 else:
+    # 桌面环境
     _FONT_DIR = _os.path.join(_os.path.dirname(_os.path.abspath(__file__)), 'fonts')
-
-_FONT_PATH = _os.path.join(_FONT_DIR, 'NotoSansCJKsc-Regular.otf')
-
-if _os.path.isfile(_FONT_PATH):
-    # 设置 Kivy 默认字体为支持中文的 Noto Sans CJK
-    Config.set('kivy', 'default_font', ['NotoSansCJKsc', _FONT_PATH, 'Roboto'])
-    # 注册资源路径
-    from kivy.resources import resource_add_path
-    resource_add_path(_FONT_DIR)
-else:
-    # 尝试其他可能的路径
-    _alt_paths = [
-        _os.path.join(_os.path.dirname(_os.path.dirname(_os.path.abspath(__file__))), 'mobile', 'fonts', 'NotoSansCJKsc-Regular.otf'),
-        '/data/data/com.cryptomind.cryptomindpro/files/app/fonts/NotoSansCJKsc-Regular.otf',
-        '/data/data/com.cryptomind.cryptomindpro/files/app/mobile/fonts/NotoSansCJKsc-Regular.otf',
-    ]
-    for _alt in _alt_paths:
-        if _os.path.isfile(_alt):
-            Config.set('kivy', 'default_font', ['NotoSansCJKsc', _alt, 'Roboto'])
-            from kivy.resources import resource_add_path
-            resource_add_path(_os.path.dirname(_alt))
-            break
+    _FONT_PATH = _os.path.join(_FONT_DIR, 'NotoSansCJKsc-Regular.otf')
+    if _os.path.isfile(_FONT_PATH):
+        Config.set('kivy', 'default_font', ['NotoSansCJKsc', _FONT_PATH, 'Roboto'])
+        from kivy.resources import resource_add_path
+        resource_add_path(_FONT_DIR)
 
 from kivymd.app import MDApp
 from kivymd.uix.screen import MDScreen
@@ -181,14 +164,15 @@ class CryptoMindApp(MDApp):
         self.theme_cls.accent_palette = "Teal"
         self.theme_cls.theme_style = "Dark"  # 深色主题
     
-    def build(self):
-        # 注册中文字体到 KivyMD 主题（覆盖所有 font_style）
+    def _register_chinese_font_safe(self):
+        """Android 安全字体注册 — 仅在字体存在且可加载时启用"""
         import os
-        font_dir = os.path.join(os.path.dirname(os.path.abspath(__file__)), 'fonts')
-        font_path = os.path.join(font_dir, 'NotoSansCJKsc-Regular.otf')
-        if os.path.isfile(font_path):
-            # KivyMD 1.2.0 中文字体修复
-            # 只覆盖文字样式，保留原始 Icon 样式不变（否则 MDIconButton 崩溃）
+        try:
+            font_dir = os.path.join(os.path.dirname(os.path.abspath(__file__)), 'fonts')
+            font_path = os.path.join(font_dir, 'NotoSansCJKsc-Regular.otf')
+            if not os.path.isfile(font_path):
+                return
+            # 只覆盖文字样式，保留 Icon 样式
             _original_styles = self.theme_cls.font_styles.copy()
             _text_styles = [
                 'H1', 'H2', 'H3', 'H4', 'H5', 'H6',
@@ -201,6 +185,10 @@ class CryptoMindApp(MDApp):
                     self.theme_cls.font_styles[_style] = [
                         font_path, _orig[1], _orig[2], _orig[3]
                     ]
+        except Exception:
+            pass  # 字体注册失败不影响启动
+
+    def build(self):
         """构建应用界面 - ScreenManager + 底部导航栏
         
         KivyMD 1.2.0 的 MDBottomNavigationItem 不作为 Python 类导出，
@@ -208,7 +196,10 @@ class CryptoMindApp(MDApp):
         """
         from kivy.uix.screenmanager import ScreenManager
         from kivymd.uix.boxlayout import MDBoxLayout
-        
+
+        # Android 安全字体注册
+        self._register_chinese_font_safe()
+
         # Tab 定义: (name, text, icon)
         tabs = [
             ("home", "首页", "home"),
