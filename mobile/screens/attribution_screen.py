@@ -70,7 +70,7 @@ class AttributionScreen(Screen):
                 padding="12dp",
                 size_hint_y=None,
                 height="80dp",
-                md_bg_color=(0.1, 0.11, 0.13, 1),
+                bg_color=(0.1, 0.11, 0.13, 1),
             )
             box = BoxLayout(orientation="vertical", spacing="4dp")
             box.add_widget(MDLabel(

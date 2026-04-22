@@ -70,7 +70,7 @@ class KnowledgeScreen(Screen):
                 padding="12dp",
                 size_hint_y=None,
                 height="70dp",
-                md_bg_color=(0.1, 0.11, 0.13, 1),
+                bg_color=(0.1, 0.11, 0.13, 1),
             )
             box = BoxLayout(orientation="horizontal")
             box.add_widget(MDLabel(text=label, halign="left", theme_text_color="Secondary"))
