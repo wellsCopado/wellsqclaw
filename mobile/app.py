@@ -21,7 +21,7 @@ from mobile.screens.knowledge_screen import KnowledgeScreen
 from mobile.screens.attribution_screen import AttributionScreen
 from mobile.screens.paper_trading_screen import PaperTradingScreen
 from kivymd.uix.navigationdrawer import MDNavigationDrawer
-from kivymd.uix.bottomnavigation import MDBottomNavigation
+from kivymd.uix.bottomnavigation import MDBottomNavigation, MDBottomNavigationItem
 from kivymd.uix.toolbar import MDTopAppBar
 from kivymd.uix.button import MDRaisedButton, MDIconButton
 from kivymd.uix.label import MDLabel
