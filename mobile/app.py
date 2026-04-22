@@ -21,7 +21,7 @@ from mobile.screens.knowledge_screen import KnowledgeScreen
 from mobile.screens.attribution_screen import AttributionScreen
 from mobile.screens.paper_trading_screen import PaperTradingScreen
 from kivymd.uix.navigationdrawer import MDNavigationDrawer
-from kivymd.uix.bottomnavigation import MDBottomNavigation, MDBottomNavigationItem
+# MDBottomNavigation/MDBottomNavigationItem removed: not available as Python class in KivyMD 1.2.0
 from kivymd.uix.toolbar import MDTopAppBar
 from kivymd.uix.button import MDRaisedButton, MDIconButton
 from kivymd.uix.label import MDLabel
@@ -150,94 +150,108 @@ class CryptoMindApp(MDApp):
         self.theme_cls.theme_style = "Dark"  # 深色主题
     
     def build(self):
-        """构建应用界面"""
-        # 底部导航
-        bottom_nav = MDBottomNavigation()
+        """构建应用界面 - ScreenManager + 底部导航栏
+        
+        KivyMD 1.2.0 的 MDBottomNavigationItem 不作为 Python 类导出，
+        只在 KV 语言中可用。因此用 ScreenManager + 自定义底部栏实现导航。
+        """
+        from kivy.uix.screenmanager import ScreenManager
+        from kivymd.uix.boxlayout import MDBoxLayout
+        
+        # Tab 定义: (name, text, icon)
+        tabs = [
+            ("home", "首页", "home"),
+            ("analysis", "分析", "brain"),
+            ("news", "新闻", "newspaper-variant-outline"),
+            ("onchain", "链上", "chain"),
+            ("knowledge", "知识库", "brain"),
+            ("attribution", "归因", "chart-pie"),
+            ("paper_trading", "模拟", "cash"),
+            ("settings", "设置", "cog"),
+        ]
+        
+        # ScreenManager
+        sm = ScreenManager()
         
         # 首页
         home = MDScreen(name="home")
         home.add_widget(self.create_home_ui())
-        bottom_nav.add_widget(MDBottomNavigationItem(
-            name="home",
-            text="首页",
-            icon="home",
-            on_tab_press=lambda x: None
-        ))
-        bottom_nav.add_widget(home)
+        sm.add_widget(home)
         
         # 分析页
         analysis = MDScreen(name="analysis")
         analysis.add_widget(self.create_analysis_ui())
-        bottom_nav.add_widget(MDBottomNavigationItem(
-            name="analysis",
-            text="分析",
-            icon="brain",
-            on_tab_press=lambda x: None
-        ))
-        bottom_nav.add_widget(analysis)
+        sm.add_widget(analysis)
+        
+        # 新闻页
+        news_screen = NewsScreen(name="news")
+        sm.add_widget(news_screen)
+
+        # 链上数据页
+        onchain_screen = OnchainScreen(name="onchain")
+        sm.add_widget(onchain_screen)
+
+        # 知识库页
+        knowledge_screen = KnowledgeScreen(name="knowledge")
+        sm.add_widget(knowledge_screen)
+
+        # 归因分析页
+        attr_screen = AttributionScreen(name="attribution")
+        sm.add_widget(attr_screen)
+
+        # Paper Trading页
+        paper_screen = PaperTradingScreen(name="paper_trading")
+        sm.add_widget(paper_screen)
         
         # 设置页
         settings = MDScreen(name="settings")
         settings.add_widget(self.create_settings_ui())
-        bottom_nav.add_widget(MDBottomNavigationItem(
-            name="settings",
-            text="设置",
-            icon="cog",
-            on_tab_press=lambda x: None
-        ))
-        bottom_nav.add_widget(settings)
-
-        # 新闻页
-        news_screen = NewsScreen(name="news")
-        bottom_nav.add_widget(MDBottomNavigationItem(
-            name="news",
-            text="新闻",
-            icon="newspaper-variant-outline",
-            on_tab_press=lambda x: None
-        ))
-        bottom_nav.add_widget(news_screen)
-
-        # 链上数据页
-        onchain_screen = OnchainScreen(name="onchain")
-        bottom_nav.add_widget(MDBottomNavigationItem(
-            name="onchain",
-            text="链上",
-            icon="chain",
-            on_tab_press=lambda x: None
-        ))
-        bottom_nav.add_widget(onchain_screen)
-
-        # 知识库页
-        knowledge_screen = KnowledgeScreen(name="knowledge")
-        bottom_nav.add_widget(MDBottomNavigationItem(
-            name="knowledge",
-            text="知识库",
-            icon="brain",
-            on_tab_press=lambda x: None
-        ))
-        bottom_nav.add_widget(knowledge_screen)
-
-        # 归因分析页
-        attr_screen = AttributionScreen(name="attribution")
-        bottom_nav.add_widget(MDBottomNavigationItem(
-            name="attribution",
-            text="归因",
-            icon="chart-pie",
-            on_tab_press=lambda x: None
-        ))
-        bottom_nav.add_widget(attr_screen)
-
-        # Paper Trading页
-        paper_screen = PaperTradingScreen(name="paper_trading")
-        bottom_nav.add_widget(MDBottomNavigationItem(
-            name="paper_trading",
-            text="模拟",
-            icon="cash",
-            on_tab_press=lambda x: None
-        ))
-        bottom_nav.add_widget(paper_screen)
+        sm.add_widget(settings)
         
-        return bottom_nav
+        # 底部导航栏
+        nav_bar = MDBoxLayout(
+            orientation="horizontal",
+            size_hint_y=None,
+            height="56dp",
+            md_bg_color=[0.07, 0.10, 0.13, 1],
+            spacing="4dp",
+            padding=["8dp", "4dp", "8dp", "4dp"],
+        )
+        
+        self._tab_buttons = []
+        for i, (name, text, icon) in enumerate(tabs):
+            btn = MDIconButton(
+                icon=icon if icon in md_icons else "checkbox-blank-circle",
+                theme_text_color="Custom" if i == 0 else "Secondary",
+                text_color=[0.63, 0.54, 1, 1] if i == 0 else [0.6, 0.6, 0.6, 1],
+                on_release=lambda x, n=name: self.switch_tab(n),
+                pos_hint={"center_y": 0.5},
+            )
+            nav_bar.add_widget(btn)
+            self._tab_buttons.append((name, btn))
+        
+        # 主布局: ScreenManager + 底部导航
+        root = MDBoxLayout(orientation="vertical")
+        root.add_widget(sm)
+        root.add_widget(nav_bar)
+        
+        self._screen_manager = sm
+        
+        return root
+    
+    def switch_tab(self, name: str):
+        """切换 tab 页面"""
+        sm = self._screen_manager
+        if sm.current != name:
+            sm.current = name
+        # 更新按钮高亮
+        for tab_name, btn in self._tab_buttons:
+            if tab_name == name:
+                btn.theme_text_color = "Custom"
+                btn.text_color = [0.63, 0.54, 1, 1]  # 紫色高亮
+            else:
+                btn.theme_text_color = "Secondary"
+                btn.text_color = [0.6, 0.6, 0.6, 1]
     
     def create_home_ui(self):
         """创建首页UI"""
