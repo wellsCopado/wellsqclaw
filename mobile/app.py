@@ -169,6 +169,7 @@ class CryptoMindApp(MDApp):
         if os.path.isfile(font_path):
             # KivyMD 1.2.0: 通过 theme_cls.font_styles 覆盖所有内置字体样式
             # KivyMD 1.2.0 font_styles format: [font_name, size, italic, letter_spacing]
+            # 必须保留 'Icon' 样式用于 MDIconButton 等图标组件
             self.theme_cls.font_styles = {
                 'H1': [font_path, 96, False, -0.02],
                 'H2': [font_path, 60, False, -0.035],
@@ -183,6 +184,7 @@ class CryptoMindApp(MDApp):
                 'Button': [font_path, 14, False, 0.0034],
                 'Caption': [font_path, 12, False, 0.037],
                 'Overline': [font_path, 10, False, 0.067],
+                'Icon': ['Icons', 24, False, 0.0],  # 必须保留，用于 MDIconButton
             }
         """构建应用界面 - ScreenManager + 底部导航栏
         
