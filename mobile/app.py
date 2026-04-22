@@ -13,6 +13,18 @@ Config.set("kivy", "orientation", "portrait")
 Config.set("kivy", "window_shape", "rounded")
 Config.set("graphics", "maxfps", 30)
 
+# ====== 中文字体注册（必须在 import Kivy/KivyMD 之前）======
+import os as _os
+_FONT_DIR = _os.path.join(_os.path.dirname(_os.path.abspath(__file__)), 'fonts')
+if _os.path.isdir(_FONT_DIR):
+    _FONT_PATH = _os.path.join(_FONT_DIR, 'NotoSansCJKsc-Regular.otf')
+    if _os.path.isfile(_FONT_PATH):
+        # 设置 Kivy 默认字体为支持中文的 Noto Sans CJK
+        Config.set('kivy', 'default_font', ['NotoSansCJKsc', _FONT_PATH, 'Roboto'])
+        # 注册资源路径
+        from kivy.resources import resource_add_path
+        resource_add_path(_FONT_DIR)
+
 from kivymd.app import MDApp
 from kivymd.uix.screen import MDScreen
 from mobile.screens.news_screen import NewsScreen
@@ -150,18 +162,27 @@ class CryptoMindApp(MDApp):
         self.theme_cls.theme_style = "Dark"  # 深色主题
     
     def build(self):
-        # 注册中文字体（解决 Android 上中文显示为方块的问题）
-        from kivy.resources import resource_add_path
+        # 注册中文字体到 KivyMD 主题（覆盖所有 font_style）
         import os
         font_dir = os.path.join(os.path.dirname(os.path.abspath(__file__)), 'fonts')
-        if os.path.isdir(font_dir):
-            resource_add_path(font_dir)
-            from kivy.core.text import Label
-            Label.register('NotoSansCJKsc',
-                           os.path.join(font_dir, 'NotoSansCJKsc-Regular.otf'))
-            # 设置为默认字体
-            from kivy.config import Config
-            Config.set('kivy', 'default_font', ['NotoSansCJKsc', 'Roboto', 'data/fonts/Roboto-Regular.ttf'])
+        font_path = os.path.join(font_dir, 'NotoSansCJKsc-Regular.otf')
+        if os.path.isfile(font_path):
+            # KivyMD 1.2.0: 通过 theme_cls.font_styles 覆盖所有内置字体样式
+            self.theme_cls.font_styles = {
+                'H1': ['NotoSansCJKsc', font_path, 96, False, -0.02],
+                'H2': ['NotoSansCJKsc', font_path, 60, False, -0.035],
+                'H3': ['NotoSansCJKsc', font_path, 48, False, -0.04],
+                'H4': ['NotoSansCJKsc', font_path, 34, False, -0.04],
+                'H5': ['NotoSansCJKsc', font_path, 24, False, -0.037],
+                'H6': ['NotoSansCJKsc', font_path, 20, False, -0.033],
+                'Subtitle1': ['NotoSansCJKsc', font_path, 16, False, 0.0075],
+                'Subtitle2': ['NotoSansCJKsc', font_path, 14, False, 0.0034],
+                'Body1': ['NotoSansCJKsc', font_path, 16, False, 0.0075],
+                'Body2': ['NotoSansCJKsc', font_path, 14, False, 0.0034],
+                'Button': ['NotoSansCJKsc', font_path, 14, False, 0.0034],
+                'Caption': ['NotoSansCJKsc', font_path, 12, False, 0.037],
+                'Overline': ['NotoSansCJKsc', font_path, 10, False, 0.067],
+            }
         """构建应用界面 - ScreenManager + 底部导航栏
         
         KivyMD 1.2.0 的 MDBottomNavigationItem 不作为 Python 类导出，
