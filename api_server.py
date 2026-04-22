@@ -53,7 +53,9 @@ paper_trading = PaperTradingEngine()
 backup_mgr = BackupManager()
 
 # ==================== 认证 + 限流 ====================
-API_KEYS_FILE = os.path.join(os.path.dirname(__file__), "data", "api_keys.json")
+# 使用 config.settings 中的路径（Android 嵌入式模式会被 embedded_server 覆盖）
+from config.settings import DATA_DIR
+API_KEYS_FILE = os.path.join(DATA_DIR, "api_keys.json")
 
 def _load_api_keys() -> dict:
     if os.path.exists(API_KEYS_FILE):
@@ -92,10 +94,21 @@ _rate_limit_store = defaultdict(list)
 
 @app.middleware("http")
 async def auth_and_rate_limit(request: Request, call_next):
+    # 白名单路径（不需要认证）
     whitelist = ["/api/health", "/docs", "/openapi.json", "/redoc", "/", "/dashboard"]
     if any(request.url.path.startswith(p) for p in whitelist):
         return await call_next(request)
     
+    # Android嵌入式模式：所有localhost请求免认证
+    # 检测方式：ANDROID_ROOT环境变量 或 客户端IP为127.0.0.1
+    if 'ANDROID_ROOT' in os.environ:
+        return await call_next(request)
+    
+    client_ip = request.client.host if request.client else ""
+    if client_ip in ("127.0.0.1", "::1", "localhost"):
+        return await call_next(request)
+    
+    # 非嵌入式模式：需要API Key认证
     key = request.headers.get("X-API-Key") or request.query_params.get("api_key")
     if not key:
         return JSONResponse(status_code=401, content={"detail": "Missing API key"})
@@ -115,8 +128,8 @@ async def auth_and_rate_limit(request: Request, call_next):
     
     return await call_next(request)
 
-# 审计日志
-_audit_log_file = os.path.join(os.path.dirname(__file__), "data", "audit.log")
+# 审计日志 - 使用 config.settings 中的路径
+_audit_log_file = os.path.join(DATA_DIR, "audit.log")
 
 def audit_log(request: Request, action: str, detail: str = ""):
     entry = {
@@ -145,7 +158,8 @@ async def health_detail():
     # 1. SQLite
     try:
         import sqlite3
-        db_path = os.path.join(os.path.dirname(__file__), "data", "crypto.db")
+        from config.settings import DB_PATH
+        db_path = DB_PATH
         if os.path.exists(db_path):
             conn = sqlite3.connect(db_path)
             conn.execute("SELECT 1")

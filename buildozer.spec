@@ -10,9 +10,9 @@ source.dir = .
 version = 6.0.0
 
 # 源码
-# 注: otf/ttf 字体文件已排除 — Kivy SDL2_ttf 无法加载 CJK 字体，字体包不打包入 APK
-source.include_exts = py,png,jpg,kv,atlas,gguf,db,json,txt,md
-source.include_patterns = 
+# 包含TTF字体文件（Android用TTF格式，OTF会崩溃）
+source.include_exts = py,png,jpg,kv,atlas,gguf,db,json,txt,md,ttf
+source.include_patterns = fonts/*,core/*,config/*,data/* 
 
 # 入口
 main.pyfile = mobile_app.py
@@ -36,8 +36,8 @@ orientation = portrait
 
 # ==================== 依赖包 ====================
 
-# 核心依赖
-requirements = python3, kivy, kivymd, loguru, requests, aiohttp, websockets, pillow, numpy, multidict, yarl
+# 核心依赖 + 嵌入式后端依赖
+requirements = python3, kivy, kivymd, loguru, requests, aiohttp, websockets, pillow, numpy, multidict, yarl, fastapi, uvicorn, starlette, pydantic, feedparser, httpx, h11, anyio, sniffio, certifi, idna, annotated-types, typing_extensions
 
 # 本地 AI - llama.cpp (CUDA/GPU 支持可选)
 # requirements = python3, kivy, loguru, llvmlite, llama-cpp-python

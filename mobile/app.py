@@ -164,8 +164,8 @@ class APIKeyInputContent(BoxLayout):
 # ============================================================
 import json as _json
 
-# 默认后端地址 — 手机上请改为电脑的局域网 IP
-DEFAULT_SERVER_URL = "http://192.168.31.218:8000"
+# 默认后端地址 — APK嵌入式模式使用localhost（后端嵌入在APK内）
+DEFAULT_SERVER_URL = "http://127.0.0.1:8000"
 
 
 def get_server_url():
@@ -232,26 +232,53 @@ class CryptoMindApp(MDApp):
         self.theme_cls.theme_style = "Dark"  # 深色主题
         # 加载服务器地址配置
         self.server_url = get_server_url()
+        # Android嵌入式模式：启动后台FastAPI服务器
+        self._start_embedded_server()
     
+    def _start_embedded_server(self):
+        """启动嵌入式FastAPI服务器（Android模式）"""
+        if 'ANDROID_ROOT' in _os.environ:
+            try:
+                from mobile.embedded_server import start_server, wait_for_server
+                start_server(host="127.0.0.1", port=8000)
+                # 不阻塞等待，后台启动即可
+            except Exception as e:
+                pass  # 服务器启动失败不阻止APP启动
+
     def _register_chinese_font_safe(self):
-        """Android: 完全跳过字体定制，避免 SDL2_ttf CJK 崩溃"""
-        # Android: 跳过所有字体定制
+        """注册中文字体 - Android用TTF格式（OTF会导致SDL2_ttf崩溃）"""
         import os as _os
-        if _os.name == 'posix' and 'ANDROID_ROOT' in _os.environ:
+        
+        # 查找字体目录
+        _app_dir = _os.path.dirname(_os.path.abspath(__file__))
+        font_dir = None
+        for _fd in [_os.path.join(_app_dir, 'fonts'), _os.path.join(_os.path.dirname(_app_dir), 'fonts')]:
+            if _os.path.isdir(_fd):
+                font_dir = _fd
+                break
+        
+        if not font_dir:
             return
-        # 桌面: 字体定制逻辑可在此添加（当前 Android 优先，待后续稳定后扩展）
-        try:
-            _app_dir = _os.path.dirname(_os.path.abspath(__file__))
-            for _fd in [_os.path.join(_app_dir, 'fonts'), _os.path.join(_os.path.dirname(_app_dir), 'fonts')]:
-                if _os.path.isdir(_fd):
-                    font_dir = _fd
-                    break
-            else:
-                return
-            font_path = _os.path.join(font_dir, 'NotoSansCJKsc-Regular.otf')
+        
+        # Android: 使用TTF格式（OTF会导致SDL2_ttf崩溃）
+        if _os.name == 'posix' and 'ANDROID_ROOT' in _os.environ:
+            font_path = _os.path.join(font_dir, 'NotoSansSC-Regular.ttf')
             if not _os.path.isfile(font_path):
                 return
+        else:
+            # 桌面: 优先TTF，其次OTF
+            font_path = _os.path.join(font_dir, 'NotoSansSC-Regular.ttf')
+            if not _os.path.isfile(font_path):
+                font_path = _os.path.join(font_dir, 'NotoSansCJKsc-Regular.otf')
+            if not _os.path.isfile(font_path):
+                return
+        
+        try:
+            from kivy.resources import resource_add_path
+            resource_add_path(font_dir)
+            
             _original_styles = self.theme_cls.font_styles.copy()
+            # 只更新文字样式，保留Icon使用默认字体
             _text_styles = [
                 'H1', 'H2', 'H3', 'H4', 'H5', 'H6',
                 'Subtitle1', 'Subtitle2', 'Body1', 'Body2',
@@ -259,7 +286,7 @@ class CryptoMindApp(MDApp):
             ]
             for _style in _text_styles:
                 _orig = _original_styles.get(_style)
-                if _orig:
+                if _orig and len(_orig) >= 4:
                     self.theme_cls.font_styles[_style] = [
                         font_path, _orig[1], _orig[2], _orig[3]
                     ]
@@ -396,8 +423,10 @@ class CryptoMindApp(MDApp):
         )
         btc_content = BoxLayout(orientation="vertical")
         btc_content.add_widget(MDLabel(text="BTC/USDT", font_style="H6"))
-        btc_content.add_widget(MDLabel(id="btc_price", text="$--"))
-        btc_content.add_widget(MDLabel(id="btc_change", text="--", theme_text_color="Secondary"))
+        self.btc_price_label = MDLabel(text="$--")
+        self.btc_change_label = MDLabel(text="--", theme_text_color="Secondary")
+        btc_content.add_widget(self.btc_price_label)
+        btc_content.add_widget(self.btc_change_label)
         btc_card.add_widget(btc_content)
         layout.add_widget(btc_card)
         
@@ -409,8 +438,10 @@ class CryptoMindApp(MDApp):
         )
         eth_content = BoxLayout(orientation="vertical")
         eth_content.add_widget(MDLabel(text="ETH/USDT", font_style="H6"))
-        eth_content.add_widget(MDLabel(id="eth_price", text="$--"))
-        eth_content.add_widget(MDLabel(id="eth_change", text="--", theme_text_color="Secondary"))
+        self.eth_price_label = MDLabel(text="$--")
+        self.eth_change_label = MDLabel(text="--", theme_text_color="Secondary")
+        eth_content.add_widget(self.eth_price_label)
+        eth_content.add_widget(self.eth_change_label)
         eth_card.add_widget(eth_content)
         layout.add_widget(eth_card)
         
@@ -421,13 +452,68 @@ class CryptoMindApp(MDApp):
             padding="16dp"
         )
         status_content = BoxLayout(orientation="vertical", spacing="8dp")
-        status_content.add_widget(MDLabel(id="ai_status", text="🔴 AI加载中...", font_style="Body1"))
-        status_content.add_widget(MDLabel(id="data_status", text="⚪ 数据状态未知", font_style="Body1"))
-        status_content.add_widget(MDLabel(id="db_size", text="📦 数据库: --", font_style="Body1"))
+        self.ai_status_label = MDLabel(text="🔴 AI加载中...", font_style="Body1")
+        self.data_status_label = MDLabel(text="⚪ 数据状态未知", font_style="Body1")
+        self.db_size_label = MDLabel(text="📦 数据库: --", font_style="Body1")
+        status_content.add_widget(self.ai_status_label)
+        status_content.add_widget(self.data_status_label)
+        status_content.add_widget(self.db_size_label)
         status_card.add_widget(status_content)
         layout.add_widget(status_card)
         
+        # 延迟加载数据
+        Clock.schedule_once(self.load_home_data, 2)
+        
         return layout
+    
+    def load_home_data(self, *args):
+        """从后端API加载首页数据"""
+        import requests
+        import threading
+        
+        def _fetch():
+            try:
+                # 检查服务器健康状态
+                resp = requests.get(self.server_url + "/api/health", timeout=5)
+                health = resp.json() if resp.status_code == 200 else {}
+                
+                # 更新状态
+                if health.get("status") == "ok":
+                    self.ai_status_label.text = "🟢 AI就绪"
+                    self.data_status_label.text = "🟢 数据同步正常"
+                else:
+                    self.ai_status_label.text = "🟡 后端服务中..."
+                    self.data_status_label.text = "🟡 等待数据..."
+            except Exception:
+                self.ai_status_label.text = "🔴 后端未启动"
+                self.data_status_label.text = "⚪ 请等待服务启动"
+            
+            try:
+                # 获取BTC价格
+                resp = requests.get(self.server_url + "/api/btc/price", timeout=5)
+                data = resp.json()
+                if "price" in data:
+                    price = data["price"]
+                    self.btc_price_label.text = f"${price:,.2f}"
+                    self.btc_change_label.text = f"来源: {data.get('source', '--')}"
+            except Exception:
+                self.btc_price_label.text = "$--"
+                self.btc_change_label.text = "获取失败"
+            
+            try:
+                # 获取ETH价格
+                resp = requests.get(self.server_url + "/api/market/top?symbols=ETH", timeout=5)
+                data = resp.json()
+                coins = data.get("coins", [])
+                if coins:
+                    eth = coins[0]
+                    self.eth_price_label.text = f"${eth['price']:,.2f}"
+                    self.eth_change_label.text = "实时行情"
+            except Exception:
+                self.eth_price_label.text = "$--"
+                self.eth_change_label.text = "获取失败"
+        
+        threading.Thread(target=_fetch, daemon=True).start()
     
     def create_analysis_ui(self):
         """创建分析页UI"""
