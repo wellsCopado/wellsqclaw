@@ -332,7 +332,6 @@ class CryptoMindApp(MDApp):
             orientation="horizontal",
             size_hint_y=None,
             height="56dp",
-            md_bg_color=[0.07, 0.10, 0.13, 1],
             spacing="4dp",
             padding=["8dp", "4dp", "8dp", "4dp"],
         )
