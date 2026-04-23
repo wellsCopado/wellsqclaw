@@ -37,8 +37,9 @@ orientation = portrait
 # ==================== 依赖包 ====================
 
 # 核心依赖（精简版 - 移除未使用的库以减小APK体积和避免构建问题）
-# 注意：embedded_server.py 使用纯 Python 标准库 http.server，无需 fastapi/uvicorn
-requirements = python3, kivy, kivymd, requests, urllib3, charset-normalizer, certifi, idna
+# 注意：embedded_server.py 使用纯 Python 标准库 http.server，无需 fastapi/uvicorn/numpy/pandas
+# 关键：不要包含numpy/pandas等需要C编译的库，会导致Android构建失败
+requirements = python3, kivy, kivymd, requests, urllib3, charset-normalizer, certifi, idna, pillow
 
 # 本地 AI - llama.cpp (CUDA/GPU 支持可选)
 # requirements = python3, kivy, loguru, llvmlite, llama-cpp-python
