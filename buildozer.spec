@@ -36,8 +36,9 @@ orientation = portrait
 
 # ==================== 依赖包 ====================
 
-# 核心依赖 + 嵌入式后端依赖
-requirements = python3, kivy, kivymd, loguru, requests, aiohttp, websockets, pillow, numpy, multidict, yarl, feedparser, httpx, h11, anyio, sniffio, certifi, idna, typing_extensions, click
+# 核心依赖（精简版 - 移除未使用的库以减小APK体积和避免构建问题）
+# 注意：embedded_server.py 使用纯 Python 标准库 http.server，无需 fastapi/uvicorn
+requirements = python3, kivy, kivymd, requests, urllib3, charset-normalizer, certifi, idna
 
 # 本地 AI - llama.cpp (CUDA/GPU 支持可选)
 # requirements = python3, kivy, loguru, llvmlite, llama-cpp-python
