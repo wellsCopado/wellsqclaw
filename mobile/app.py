@@ -50,6 +50,7 @@ from mobile.screens.onchain_screen import OnchainScreen
 from mobile.screens.knowledge_screen import KnowledgeScreen
 from mobile.screens.attribution_screen import AttributionScreen
 from mobile.screens.paper_trading_screen import PaperTradingScreen
+from mobile.screens.settings_screen import SettingsScreen
 from kivymd.uix.toolbar import MDTopAppBar
 from kivymd.uix.button import MDRaisedButton, MDIconButton, MDFlatButton
 from kivymd.uix.label import MDLabel
@@ -361,150 +362,7 @@ class AnalysisScreen(MDScreen):
         threading.Thread(target=_fetch_analysis, daemon=True).start()
 
 
-class SettingsScreen(MDScreen):
-    """设置页面 - API Key 配置"""
-    
-    def __init__(self, **kwargs):
-        super().__init__(**kwargs)
-        self.dialog = None
-        self._build_ui()
-    
-    def _build_ui(self):
-        """构建设置页面UI"""
-        from kivymd.uix.floatlayout import MDFloatLayout
-        from kivymd.uix.list import OneLineListItem
-        
-        layout = MDFloatLayout()
-        
-        # 标题
-        title = MDLabel(
-            text="设置",
-            font_style="H5",
-            halign="center",
-            pos_hint={"center_x": 0.5, "center_y": 0.95}
-        )
-        layout.add_widget(title)
-        
-        # 服务器地址配置
-        server_section = MDLabel(
-            text="后端服务器地址（手机必填）",
-            pos_hint={"center_x": 0.5, "center_y": 0.88},
-            halign="center",
-            font_size="14sp"
-        )
-        layout.add_widget(server_section)
-        
-        app = MDApp.get_running_app()
-        server_url = getattr(app, 'server_url', DEFAULT_SERVER_URL)
-        
-        self.server_input = MDTextField(
-            hint_text="例如: http://192.168.1.100:8000",
-            text=server_url,
-            size_hint=(0.9, None),
-            height="48dp",
-            pos_hint={"center_x": 0.5, "center_y": 0.82},
-            mode="fill",
-        )
-        layout.add_widget(self.server_input)
-        
-        save_btn = MDRaisedButton(
-            text="保存并连接",
-            size_hint=(0.5, None),
-            height="40dp",
-            pos_hint={"center_x": 0.5, "center_y": 0.75},
-            on_release=self.save_server_config,
-        )
-        layout.add_widget(save_btn)
-        
-        self.server_status_label = MDLabel(
-            text=f"当前: {server_url}",
-            font_size="11sp",
-            halign="center",
-            theme_text_color="Secondary",
-            pos_hint={"center_x": 0.5, "center_y": 0.70},
-        )
-        layout.add_widget(self.server_status_label)
-        
-        # API Key 配置区
-        api_section = MDLabel(
-            text="API Key 配置",
-            pos_hint={"center_x": 0.5, "center_y": 0.60},
-            halign="center",
-        )
-        layout.add_widget(api_section)
-        
-        for i, exchange in enumerate(["币安 API", "OKX API", "Bybit API"]):
-            item = OneLineListItem(
-                text=exchange,
-                pos_hint={"center_x": 0.5, "center_y": 0.52 - i * 0.08},
-                size_hint=(0.9, None),
-                height="44dp",
-                on_release=lambda x, t=exchange: self.open_api_dialog(t)
-            )
-            layout.add_widget(item)
-        
-        self.add_widget(layout)
-    
-    def on_enter(self):
-        """进入页面时更新状态"""
-        app = MDApp.get_running_app()
-        server_url = getattr(app, 'server_url', DEFAULT_SERVER_URL)
-        if self.server_input:
-            self.server_input.text = server_url
-        if self.server_status_label:
-            self.server_status_label.text = f"当前: {server_url}"
-    
-    def save_server_config(self, *args):
-        """保存服务器地址配置"""
-        if not self.server_input:
-            return
-        
-        new_url = self.server_input.text.strip()
-        if not new_url:
-            Snackbar(text="请输入服务器地址").open()
-            return
-        if not new_url.startswith('http'):
-            new_url = 'http://' + new_url
-        
-        save_server_url(new_url)
-        
-        app = MDApp.get_running_app()
-        app.server_url = new_url
-        
-        if self.server_status_label:
-            self.server_status_label.text = f"已保存: {new_url}"
-        Snackbar(text=f"服务器地址已保存！").open()
-    
-    def open_api_dialog(self, exchange: str):
-        """打开API配置对话框"""
-        content = BoxLayout(orientation="vertical", spacing="12dp", padding="12dp")
-        api_input = MDTextField(
-            hint_text=f"输入 {exchange} Key",
-            password=True,
-        )
-        secret_input = MDTextField(
-            hint_text=f"输入 {exchange} Secret",
-            password=True,
-        )
-        content.add_widget(api_input)
-        content.add_widget(secret_input)
-        
-        def on_save(*args):
-            # 这里可以添加保存API Key的逻辑
-            Snackbar(text=f"{exchange} 已保存").open()
-            if self.dialog:
-                self.dialog.dismiss()
-        
-        self.dialog = MDDialog(
-            title=f"配置 {exchange}",
-            type="custom",
-            content_cls=content,
-            buttons=[
-                MDFlatButton(text="取消", on_release=lambda x: self.dialog.dismiss()),
-                MDRaisedButton(text="保存", on_release=on_save),
-            ],
-        )
-        self.dialog.open()
+
 
 
 class CryptoMindApp(MDApp):
@@ -633,7 +491,7 @@ class CryptoMindApp(MDApp):
         paper_screen = PaperTradingScreen(name="paper_trading")
         sm.add_widget(paper_screen)
         
-        # 设置页 - 使用修复后的 SettingsScreen
+        # 设置页 - 使用独立的 SettingsScreen
         settings_screen = SettingsScreen(name="settings")
         sm.add_widget(settings_screen)
         

@@ -22,8 +22,65 @@ logger = logging.getLogger("embedded_server")
 _server_started = threading.Event()
 _server_ready = False
 
-# ---- CoinGlass API配置 ----
+# ---- API Key 配置（从配置文件读取） ----
 COINGLASS_API_KEY = os.environ.get("COINGLASS_API_KEY", "")
+
+# 尝试从 api_key_manager 读取
+try:
+    from config.api_keys import api_key_manager
+    COINGLASS_API_KEY = api_key_manager.get("coinglass_api_key") or COINGLASS_API_KEY
+except Exception:
+    pass
+
+# 交易所 API Key
+EXCHANGE_CONFIG = {
+    "okx": {
+        "enabled": False,
+        "api_key": os.environ.get("OKX_API_KEY", ""),
+        "api_secret": os.environ.get("OKX_API_SECRET", ""),
+        "passphrase": os.environ.get("OKX_PASSPHRASE", ""),
+        "base_url": "https://www.okx.com",
+        "demo": True,
+    },
+    "gate": {
+        "enabled": False,
+        "api_key": os.environ.get("GATE_API_KEY", ""),
+        "api_secret": os.environ.get("GATE_API_SECRET", ""),
+        "base_url": "https://api.gateio.ws",
+        "demo": True,
+    }
+}
+
+def _load_api_keys_from_manager():
+    """从 api_key_manager 加载 API Keys"""
+    try:
+        from config.api_keys import api_key_manager
+        
+        # 加载 Coinglass API Key
+        global COINGLASS_API_KEY
+        cg_key = api_key_manager.get("coinglass_api_key")
+        if cg_key:
+            COINGLASS_API_KEY = cg_key
+            
+        # 加载交易所 API Keys
+        okx_key = api_key_manager.get("okx_api_key")
+        okx_secret = api_key_manager.get("okx_api_secret")
+        okx_pass = api_key_manager.get("okx_passphrase")
+        if okx_key and okx_secret:
+            EXCHANGE_CONFIG["okx"]["api_key"] = okx_key
+            EXCHANGE_CONFIG["okx"]["api_secret"] = okx_secret
+            EXCHANGE_CONFIG["okx"]["passphrase"] = okx_pass
+            EXCHANGE_CONFIG["okx"]["enabled"] = True
+            
+        gate_key = api_key_manager.get("gate_api_key")
+        gate_secret = api_key_manager.get("gate_api_secret")
+        if gate_key and gate_secret:
+            EXCHANGE_CONFIG["gate"]["api_key"] = gate_key
+            EXCHANGE_CONFIG["gate"]["api_secret"] = gate_secret
+            EXCHANGE_CONFIG["gate"]["enabled"] = True
+            
+    except Exception as e:
+        logger.warning(f"Failed to load API keys from manager: {e}")
 
 class NewsHTMLParser(HTMLParser):
     """轻量级HTML解析器，提取新闻标题和链接"""
@@ -273,28 +330,14 @@ _trading_cache = {
 # ---- Knowledge stats cache ----
 _knowledge_cache = {"patterns": {}, "updated": 0}
 
-# ---- Exchange API配置 ----
-EXCHANGE_CONFIG = {
-    "okx": {
-        "enabled": False,
-        "api_key": os.environ.get("OKX_API_KEY", ""),
-        "api_secret": os.environ.get("OKX_API_SECRET", ""),
-        "passphrase": os.environ.get("OKX_PASSPHRASE", ""),
-        "base_url": "https://www.okx.com",
-        "demo": True,  # 模拟交易
-    },
-    "gate": {
-        "enabled": False,
-        "api_key": os.environ.get("GATE_API_KEY", ""),
-        "api_secret": os.environ.get("GATE_API_SECRET", ""),
-        "base_url": "https://api.gateio.ws",
-        "demo": True,  # 模拟交易
-    }
-}
+
 
 
 def _init_exchange_config():
     """初始化交易所配置"""
+    # 首先尝试从 api_key_manager 加载
+    _load_api_keys_from_manager()
+    
     for ex_name, config in EXCHANGE_CONFIG.items():
         if config["api_key"] and config["api_secret"]:
             config["enabled"] = True
@@ -914,6 +957,10 @@ def start_server(host="127.0.0.1", port=8000):
             
             def _init_data():
                 try:
+                    # 先加载 API Keys
+                    _load_api_keys_from_manager()
+                    _init_exchange_config()
+                    
                     _fetch_btc_price()
                     _fetch_eth_price()
                     _fetch_top_coins()
