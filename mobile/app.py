@@ -246,10 +246,16 @@ class CryptoMindApp(MDApp):
                 pass  # 服务器启动失败不阻止APP启动
 
     def _register_chinese_font_safe(self):
-        """注册中文字体 - Android用TTF格式（OTF会导致SDL2_ttf崩溃）"""
+        """注册中文字体 - Android用TTF格式（OTF会导致SDL2_ttf崩溃）
+        
+        关键修复：
+        1. 使用LabelBase.register动态注册字体
+        2. 同时更新Kivy默认字体和KivyMD font_styles
+        3. 确保字体路径正确打包到APK中
+        """
         import os as _os
         
-        # 查找字体目录
+        # 查找字体目录（Android和桌面环境）
         _app_dir = _os.path.dirname(_os.path.abspath(__file__))
         font_dir = None
         for _fd in [_os.path.join(_app_dir, 'fonts'), _os.path.join(_os.path.dirname(_app_dir), 'fonts')]:
@@ -258,40 +264,51 @@ class CryptoMindApp(MDApp):
                 break
         
         if not font_dir:
+            print("[FONT] 字体目录未找到")
             return
         
-        # Android: 使用TTF格式（OTF会导致SDL2_ttf崩溃）
-        if _os.name == 'posix' and 'ANDROID_ROOT' in _os.environ:
-            font_path = _os.path.join(font_dir, 'NotoSansSC-Regular.ttf')
-            if not _os.path.isfile(font_path):
-                return
-        else:
-            # 桌面: 优先TTF，其次OTF
-            font_path = _os.path.join(font_dir, 'NotoSansSC-Regular.ttf')
-            if not _os.path.isfile(font_path):
-                font_path = _os.path.join(font_dir, 'NotoSansCJKsc-Regular.otf')
-            if not _os.path.isfile(font_path):
-                return
+        # 优先使用TTF格式（Android和桌面都兼容）
+        font_path = _os.path.join(font_dir, 'NotoSansSC-Regular.ttf')
+        if not _os.path.isfile(font_path):
+            # 回退到OTF（仅桌面）
+            font_path = _os.path.join(font_dir, 'NotoSansCJKsc-Regular.otf')
+        
+        if not _os.path.isfile(font_path):
+            print(f"[FONT] 字体文件未找到: {font_path}")
+            return
         
         try:
             from kivy.resources import resource_add_path
+            from kivy.core.text import LabelBase
+            
+            # 添加字体目录到资源路径
             resource_add_path(font_dir)
             
+            # 注册字体到Kivy（关键步骤）
+            LabelBase.register('NotoSansSC', font_path)
+            
+            # 更新KivyMD字体样式
             _original_styles = self.theme_cls.font_styles.copy()
-            # 只更新文字样式，保留Icon使用默认字体
             _text_styles = [
                 'H1', 'H2', 'H3', 'H4', 'H5', 'H6',
                 'Subtitle1', 'Subtitle2', 'Body1', 'Body2',
                 'Button', 'Caption', 'Overline'
             ]
+            
             for _style in _text_styles:
                 _orig = _original_styles.get(_style)
                 if _orig and len(_orig) >= 4:
+                    # 保留原字体的其他属性，只替换字体文件路径
                     self.theme_cls.font_styles[_style] = [
-                        font_path, _orig[1], _orig[2], _orig[3]
+                        'NotoSansSC',  # 使用注册的字体名称
+                        _orig[1],      # 字体大小
+                        _orig[2],      # 行高
+                        _orig[3],      # 字重
                     ]
-        except Exception:
-            pass
+            
+            print(f"[FONT] 中文字体注册成功: {font_path}")
+        except Exception as e:
+            print(f"[FONT] 字体注册失败: {e}")
 
     def build(self):
         """构建应用界面 - ScreenManager + 底部导航栏
@@ -305,16 +322,14 @@ class CryptoMindApp(MDApp):
         # Android 安全字体注册
         self._register_chinese_font_safe()
 
-        # Tab 定义: (name, text, icon)
+        # Tab 定义: (name, text, icon) - 只保留5个主要tab适配小屏幕
+        # 注意：320x480屏幕只能容纳约5个图标
         tabs = [
             ("home", "首页", "home"),
-            ("analysis", "分析", "brain"),
-            ("news", "新闻", "newspaper-variant-outline"),
-            ("onchain", "链上", "chain"),
-            ("knowledge", "知识库", "brain"),
-            ("attribution", "归因", "chart-pie"),
-            ("paper_trading", "模拟", "cash"),
-            ("settings", "设置", "cog"),
+            ("analysis", "AI分析", "brain"),
+            ("news", "资讯", "newspaper-variant-outline"),
+            ("knowledge", "知识", "book-open-variant"),
+            ("paper_trading", "交易", "cash"),
         ]
         
         # ScreenManager
@@ -342,15 +357,11 @@ class CryptoMindApp(MDApp):
         knowledge_screen = KnowledgeScreen(name="knowledge")
         sm.add_widget(knowledge_screen)
 
-        # 归因分析页
-        attr_screen = AttributionScreen(name="attribution")
-        sm.add_widget(attr_screen)
-
-        # Paper Trading页
+        # Paper Trading页（模拟交易）
         paper_screen = PaperTradingScreen(name="paper_trading")
         sm.add_widget(paper_screen)
         
-        # 设置页
+        # 设置页（从首页进入）
         settings = MDScreen(name="settings")
         settings.add_widget(self.create_settings_ui())
         sm.add_widget(settings)
@@ -447,19 +458,36 @@ class CryptoMindApp(MDApp):
         
         # 状态卡片
         status_card = MDCard(
-            pos_hint={"center_x": 0.5, "center_y": 0.3},
-            size_hint=(0.9, 0.18),
+            pos_hint={"center_x": 0.5, "center_y": 0.35},
+            size_hint=(0.9, 0.15),
             padding="16dp"
         )
-        status_content = BoxLayout(orientation="vertical", spacing="8dp")
+        status_content = BoxLayout(orientation="vertical", spacing="4dp")
         self.ai_status_label = MDLabel(text="🔴 AI加载中...", font_style="Body1")
         self.data_status_label = MDLabel(text="⚪ 数据状态未知", font_style="Body1")
-        self.db_size_label = MDLabel(text="📦 数据库: --", font_style="Body1")
         status_content.add_widget(self.ai_status_label)
         status_content.add_widget(self.data_status_label)
-        status_content.add_widget(self.db_size_label)
         status_card.add_widget(status_content)
         layout.add_widget(status_card)
+        
+        # 设置按钮（进入API配置）
+        from kivymd.uix.button import MDIconButton
+        settings_btn = MDIconButton(
+            icon="cog",
+            pos_hint={"center_x": 0.5, "center_y": 0.18},
+            on_release=lambda x: self.switch_tab("settings"),
+            theme_text_color="Secondary",
+        )
+        layout.add_widget(settings_btn)
+        
+        settings_label = MDLabel(
+            text="API配置",
+            halign="center",
+            pos_hint={"center_x": 0.5, "center_y": 0.12},
+            font_size="12sp",
+            theme_text_color="Secondary",
+        )
+        layout.add_widget(settings_label)
         
         # 延迟加载数据
         Clock.schedule_once(self.load_home_data, 2)
