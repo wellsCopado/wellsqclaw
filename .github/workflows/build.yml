@@ -8,13 +8,22 @@ on:
 jobs:
   build:
     runs-on: ubuntu-latest
-    timeout-minutes: 120
+    timeout-minutes: 180
     container:
       image: kivy/buildozer:latest
 
     steps:
       - name: Checkout code
         uses: actions/checkout@v4
+
+      - name: Download AI Model (Gemma 3 4B Q4_K_M)
+        run: |
+          mkdir -p assets/models
+          # 使用 Hugging Face 下载量化模型
+          curl -L -o assets/models/gemma-3-4b-it-q4_k_m.gguf \
+            "https://huggingface.co/google/gemma-3-4b-it-q4_k_m.gguf/resolve/main/gemma-3-4b-it-q4_k_m.gguf" \
+            || echo "Model download failed - will use cloud API fallback"
+          ls -lh assets/models/ || echo "No models directory"
 
       - name: Build APK
         run: |

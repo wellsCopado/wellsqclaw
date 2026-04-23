@@ -13,7 +13,7 @@ package.domain = ai.cryptomind
 source.dir = .
 
 # (list) Source files to include (let empty to include all the files)
-source.include_exts = py,png,jpg,kv,atlas,json,db,ttf,ttc
+source.include_exts = py,png,jpg,kv,atlas,json,db,ttf,ttc,gguf
 
 # (str) Application versioning
 version = 1.0.0
@@ -96,9 +96,8 @@ warn_on_root = 1
 # Custom additions for AI Model
 # ==================================================================
 
-# Include the AI model file (GGUF format)
-# Note: Model should be placed in assets/ folder
-# android.add_src = assets/models/gemma-3-4b.q4_k_m.gguf
+# Include the AI model file (GGUF format - Gemma 3 4B Q4_K_M quantized ~2.5GB)
+android.add_src = assets/models/gemma-3-4b-it-q4_k_m.gguf
 
 # Increase heap size for AI inference
 android.ndk_args = APP_PLATFORM=android-24 APP_STL=c++_shared
