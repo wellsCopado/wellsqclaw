@@ -1,75 +1,107 @@
-# CryptoMind Pro Plus AI - Buildozer Android 配置
-
 [app]
 
-# 应用信息
+# (str) Title of your application
 title = CryptoMind Pro
+
+# (str) Package name
 package.name = cryptomindpro
-package.domain = com.cryptomind
+
+# (str) Package domain (needed for android/ios packaging)
+package.domain = ai.cryptomind
+
+# (str) Source code where the main.py live
 source.dir = .
-version = 6.0.0
 
-# 源码
-# 包含TTF字体文件（Android用TTF格式，OTF会崩溃）
-source.include_exts = py,png,jpg,kv,atlas,gguf,db,json,txt,md,ttf
-source.include_patterns = fonts/*,core/*,config/*,data/* 
+# (list) Source files to include (let empty to include all the files)
+source.include_exts = py,png,jpg,kv,atlas,json,db,ttf,ttc
 
-# 入口
-main.pyfile = mobile_app.py
+# (str) Application versioning
+version = 1.0.0
 
-# 权限
-android.permissions = INTERNET, ACCESS_NETWORK_STATE, READ_EXTERNAL_STORAGE, WRITE_EXTERNAL_STORAGE, VIBRATE
+# (list) Application requirements
+# 纯 Kivy 实现，无需 KivyMD
+requirements = python3,kivy,requests,urllib3,charset-normalizer,certifi,idna
 
-# Android 配置
-android.archs = arm64-v8a, armeabi-v7a
-android.minapi = 24
-android.api = 34
-android.accept_sdk_license = True
+# (str) Presplash of the application
+#presplash.filename = %(source.dir)s/assets/presplash.png
 
-# 启动画面
-android.manifest.applicationAttributes = android:icon="@mipmap/icon"
-android.manifest.launchAttributes = android:screenOrientation="portrait"
+# (str) Icon of the application
+#icon.filename = %(source.dir)s/assets/icon.png
 
-# APK 元数据
-fullscreen = False
+# (str) Supported orientation (landscape, portrait or all)
 orientation = portrait
 
-# ==================== 依赖包 ====================
+# (bool) Indicate if the application should be fullscreen or not
+fullscreen = 0
 
-# 核心依赖（精简版 - 移除未使用的库以减小APK体积和避免构建问题）
-# 注意：embedded_server.py 使用纯 Python 标准库 http.server，无需 fastapi/uvicorn
-requirements = python3, kivy, kivymd, requests, urllib3, charset-normalizer, certifi, idna
+# (list) Permissions
+android.permissions = INTERNET,ACCESS_NETWORK_STATE,WRITE_EXTERNAL_STORAGE,READ_EXTERNAL_STORAGE
 
-# 本地 AI - llama.cpp (CUDA/GPU 支持可选)
-# requirements = python3, kivy, loguru, llvmlite, llama-cpp-python
+# (int) Target Android API, should be as high as possible.
+android.api = 33
 
-# P4A (Python for Android) 构建配置
-p4a.branch = master
+# (int) Minimum API your APK will support.
+android.minapi = 24
 
-# Android NDK 版本
-android.ndk_version = 25b
+# (str) Android NDK version to use
+android.ndk = 25b
 
-# Android SDK 版本
-android.sdk_version = 33
+# (bool) If True, then skip trying to update the Android sdk
+android.skip_update = False
 
-# Buildozer log 级别
+# (bool) If True, then automatically accept SDK license
+android.accept_sdk_license = True
+
+# (str) The Android arch to build for
+android.archs = arm64-v8a, armeabi-v7a
+
+# (bool) enables Android auto backup feature (Android API >=23)
+android.allow_backup = True
+
+# (str) XML to use as the backup rules file
+# android.backup_rules = 
+
+# (str) The Android logcat filters to use
+#android.logcat_filters = *:S python:D
+
+# (bool) Copy library instead of making a libpymodules.so
+android.copy_libs = 1
+
+# (list) The Android additional libraries to copy
+#android.add_libs = 
+
+# (str) The release mode
+#android.releaseartifact = aab
+
+# (str) Keystore file path
+#android.release = true
+#android.keystore = /path/to/keystore
+#android.keyalias = cryptomind
+
+# (list) Android entry point activities
+#android.entrypoint = org.kivy.android.PythonActivity
+
+# (str) Android additional options
+#android.add_options = 
+
+[buildozer]
+
+# (int) Log level (0 = error only, 1 = info, 2 = debug (with command output))
 log_level = 2
 
-# 显示构建进度
-verbosity = 2
+# (int) Display warning if buildozer is run as root (0 = False, 1 = True)
+warn_on_root = 1
 
-# ==================== 高级配置 ====================
+# ==================================================================
+# Custom additions for AI Model
+# ==================================================================
 
-# 忽略某些模块以减小 APK 大小
-# android.whitelist = lib-dynload/_ctypes.so,lib-dynload/_struct.so,lib-dynload/math.so,lib-dynload/select.so
+# Include the AI model file (GGUF format)
+# Note: Model should be placed in assets/ folder
+# android.add_src = assets/models/gemma-3-4b.q4_k_m.gguf
 
-# 服务 (后台运行)
-# android.services = MainService
+# Increase heap size for AI inference
+android.ndk_args = APP_PLATFORM=android-24 APP_STL=c++_shared
 
-# ==================== 清理配置 ====================
-
-# 构建后清理
-android.clean_building_files = True
-
-# 删除临时文件
-android.delete_temp_files = True
+# Custom Java code for model loading
+# android.gradle_dependencies = com.google.ai.edge:edge:1.0.0
