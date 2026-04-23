@@ -19,8 +19,8 @@ source.include_exts = py,png,jpg,kv,atlas,json,db,ttf,ttc
 version = 1.0.0
 
 # (list) Application requirements
-# 纯 Kivy 实现，无需 KivyMD
-requirements = python3,kivy,requests,urllib3,charset-normalizer,certifi,idna
+# Kivy + KivyMD + 网络请求库 + Android支持
+requirements = python3,kivy,kivymd,pillow,requests,urllib3,charset-normalizer,certifi,idna,pyjnius,android
 
 # (str) Presplash of the application
 #presplash.filename = %(source.dir)s/assets/presplash.png
