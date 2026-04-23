@@ -42,39 +42,72 @@ class OnchainScreen(Screen):
         self.load_data()
 
     def load_data(self):
-        # 获取全局 app 对象以读取服务器地址
         from kivy.app import App
         app = App.get_running_app()
 
         container = self.onchain_container
-
         container.clear_widgets()
 
-        # 加载ETH数据
-        try:
-            resp = requests.get(app.server_url + "/api/onchain/ethereum", timeout=5)
-            data = resp.json().get("data", {})
-        except:
-            data = {"error": "数据获取失败"}
+        # 显示加载中
+        container.add_widget(MDLabel(
+            text="加载中...",
+            halign="center",
+            theme_text_color="Secondary"
+        ))
 
-        # 创建指标卡片
-        metrics = [
-            ("Gas价格 (Gwei)", str(data.get("gas_price", data.get("mean_gas_price", "--")))),
-            ("活跃地址", str(data.get("active_addresses", "--"))),
-            ("大额转账", str(data.get("large_transfers", "--"))),
-            ("MVRV比率", str(data.get("mvrv", "--"))),
-            ("矿工收益", str(data.get("miner_revenue", "--"))),
-        ]
+        def _fetch(dt):
+            container.clear_widgets()
+            data = {}
+            error_msg = ""
 
-        for label, value in metrics:
-            card = MDCard(
-                padding="12dp",
-                size_hint_y=None,
-                height="80dp",
-                md_bg_color=(0.1, 0.11, 0.13, 1),
-            )
-            box = BoxLayout(orientation="horizontal")
-            box.add_widget(MDLabel(text=label, halign="left", theme_text_color="Secondary"))
-            box.add_widget(MDLabel(text=value, halign="right", theme_text_color="Primary"))
-            card.add_widget(box)
-            container.add_widget(card)
+            try:
+                resp = requests.get(app.server_url + "/api/onchain/ethereum", timeout=10)
+                if resp.status_code == 200:
+                    result = resp.json()
+                    # 兼容多种响应格式
+                    if isinstance(result, dict):
+                        data = result.get("data", result)
+                    else:
+                        data = {}
+                else:
+                    error_msg = f"服务器返回错误: {resp.status_code}"
+            except requests.exceptions.ConnectionError:
+                error_msg = "连接失败，请检查服务器地址"
+            except requests.exceptions.Timeout:
+                error_msg = "请求超时"
+            except Exception as e:
+                error_msg = f"获取失败: {str(e)}"
+
+            if error_msg:
+                container.add_widget(MDLabel(
+                    text=error_msg,
+                    halign="center",
+                    theme_text_color="Error"
+                ))
+                return
+
+            # 创建指标卡片
+            metrics = [
+                ("Gas价格 (Gwei)", str(data.get("gas_price", data.get("mean_gas_price", "--")))),
+                ("区块高度", str(data.get("block_height", "--"))),
+                ("活跃地址", str(data.get("active_addresses", "--"))),
+                ("大额转账 (24h)", str(data.get("large_transfers", data.get("large_transfers_24h", "--")))),
+                ("MVRV比率", str(data.get("mvrv", "--"))),
+                ("矿工收益 (ETH/日)", str(data.get("miner_revenue", "--"))),
+            ]
+
+            for label, value in metrics:
+                card = MDCard(
+                    padding="12dp",
+                    size_hint_y=None,
+                    height="80dp",
+                    md_bg_color=(0.1, 0.11, 0.13, 1),
+                )
+                box = BoxLayout(orientation="horizontal")
+                box.add_widget(MDLabel(text=label, halign="left", theme_text_color="Secondary"))
+                box.add_widget(MDLabel(text=value, halign="right", theme_text_color="Primary"))
+                card.add_widget(box)
+                container.add_widget(card)
+
+        from kivy.clock import Clock
+        Clock.schedule_once(_fetch, 0.1)
